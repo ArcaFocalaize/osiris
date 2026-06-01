@@ -275,7 +275,8 @@ export default function Dashboard() {
   const fetchEndpoint = useCallback(async (url: string, transform?: (d: any) => any, options?: RequestInit) => {
     if (typeof document !== 'undefined' && document.hidden) return;
     try {
-      const res = await fetch(url, options);
+      // Force the browser to bypass its local disk cache for real-time data
+      const res = await fetch(url, { ...options, cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         const d = transform ? transform(json) : json;
@@ -806,7 +807,7 @@ export default function Dashboard() {
 
 
       {/* ── NEW SIDEBAR (Root Level) ── */}
-      {showLayers && <LayerPanel data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} />}
+      {showLayers && !isMobile && <LayerPanel data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} />}
 
       {/* ── RIGHT TOOL STRIP ── */}
       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[250] pointer-events-auto bg-black/40 backdrop-blur-sm p-1 rounded-full border border-white/5">

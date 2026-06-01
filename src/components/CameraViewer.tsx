@@ -211,8 +211,8 @@ export default function CameraViewer({ camera, onClose, onLocate }: CameraViewer
               {camera.lat?.toFixed(4)}, {camera.lng?.toFixed(4)}
             </div>
             <div className="flex gap-2">
-              {(camera.feed_url || camera.external_url) && (
-                <a href={camera.external_url || camera.feed_url} target="_blank" rel="noopener noreferrer"
+              {(camera.feed_url || camera.external_url || (streamType === 'iframe' && camera.stream_url)) && (
+                <a href={camera.external_url || camera.feed_url || (streamType === 'iframe' ? camera.stream_url : undefined)} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1 text-[7px] font-mono text-[#39FF14] hover:underline tracking-wider">
                   <ExternalLink className="w-2.5 h-2.5" /> FEED
                 </a>

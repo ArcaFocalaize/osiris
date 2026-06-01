@@ -89,10 +89,11 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     const map = mapRef.current;
 
     // ── DEMO MODE SPINNING ──
-    let spinReq: number;
+    let spinReq: number | undefined = undefined;
     let isSpinning = false;
     
     const startSpinning = () => {
+      if (!map) return;
       isSpinning = true;
       let lastTime = performance.now();
       
@@ -100,12 +101,12 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         if (!isSpinning) return;
         
         // Only spin if the user is not actively dragging or zooming the map
-        if (!map.isUserInteracting() && !map.isZooming()) {
+        if (!map.isMoving() && !map.isZooming()) {
           const dt = time - lastTime;
           const center = map.getCenter();
           // Adjust spin speed: 0.5 degrees per second
-          center.lng -= (0.5 * (dt / 1000));
-          map.easeTo({ center, duration: 0, easing: n => n });
+          center.lng += (0.5 * dt) / 1000;
+          map.setCenter(center);
         }
         
         lastTime = time;

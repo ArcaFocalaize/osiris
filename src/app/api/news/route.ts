@@ -58,7 +58,7 @@ function parseTelegramHTML(html: string, channel: string): any[] {
     const textMatch = blockHtml.match(textRegex);
     if (!textMatch) continue;
     
-    let text = textMatch[1].replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+    const text = textMatch[1].replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
     if (!text || text.length < 10) continue;
 
     const dateRegex = /<a class="tgme_widget_message_date" href="(https:\/\/t\.me\/[^"]+)".*?<time datetime="([^"]+)"/i;
@@ -85,8 +85,8 @@ function parseRSSItems(xml: string, sourceName: string): any[] {
       return (m?.[1] || m?.[2] || '').trim();
     };
 
-    let title = getTag('title').replace(/<[^>]+>/g, '');
-    let desc = getTag('description').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"');
+    const title = getTag('title').replace(/<[^>]+>/g, '');
+    const desc = getTag('description').replace(/<[^>]+>/g, '').replace(/&quot;/g, '"');
     
     items.push({
       title: title.length > 100 ? title.substring(0, 100) + '...' : title,

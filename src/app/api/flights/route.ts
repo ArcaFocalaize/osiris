@@ -231,9 +231,13 @@ export async function GET() {
     lastFetchTime = Date.now();
     fetchPromise = null;
 
+    const cacheControl = data.total < 100 
+      ? 'no-store, max-age=0' 
+      : 'public, s-maxage=30, stale-while-revalidate=60';
+
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        'Cache-Control': cacheControl,
       },
     });
   } catch (error) {

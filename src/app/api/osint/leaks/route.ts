@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     
     // Parse the analytics data
     let breachList = [];
-    let dataExposed = new Set<string>();
+    const dataExposed = new Set<string>();
 
     if (data.BreachesSummary && data.BreachesSummary.site) {
        breachList = data.BreachesSummary.site.split(';').filter(Boolean);

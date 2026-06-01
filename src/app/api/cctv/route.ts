@@ -403,6 +403,10 @@ export async function GET(request: Request) {
       }
     }
 
+    const cacheControl = allCameras.length < 50 
+      ? 'no-store, max-age=0' 
+      : 'public, s-maxage=300, stale-while-revalidate=600';
+
     return NextResponse.json({
       cameras: allCameras,
       total: allCameras.length,
@@ -410,7 +414,7 @@ export async function GET(request: Request) {
       regions: regionsToFetch,
       timestamp: new Date().toISOString(),
     }, {
-      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+      headers: { 'Cache-Control': cacheControl },
     });
   } catch (error) {
     console.error('CCTV fetch error:', error);

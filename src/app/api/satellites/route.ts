@@ -208,6 +208,10 @@ export async function GET() {
       });
     }
 
+    const cacheControl = satellites.length < 10 
+      ? 'no-store, max-age=0' 
+      : 'public, s-maxage=120, stale-while-revalidate=300';
+
     return NextResponse.json({
       satellites,
       total: satellites.length,
@@ -216,7 +220,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        'Cache-Control': cacheControl,
       },
     });
   } catch (error) {
