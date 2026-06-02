@@ -22,6 +22,17 @@ interface CyberData {
   };
 }
 
+interface PizzaIndexData {
+  available: boolean;
+  stale?: boolean;
+  level?: number;
+  label?: string;
+  dcHour?: number;
+  lateNight?: boolean;
+  criticalHits?: number;
+  elevatedHits?: number;
+}
+
 const RISK_TOOLTIPS: Record<string, string> = {
   CRITICAL: 'Active conflict, sanctions, or major instability detected',
   HIGH: 'Elevated threat level — ongoing tensions or security concerns',
@@ -37,6 +48,14 @@ const EWS_LABELS: Record<number, string> = {
   5: 'ALARM',
 };
 
+const PPI_LABELS: Record<number, string> = {
+  1: 'QUIET',
+  2: 'ACTIVE',
+  3: 'ELEVATED',
+  4: 'HOT',
+  5: 'BURNING',
+};
+
 export default function GlobalStatusBar() {
   const [exchanges, setExchanges] = useState<Exchange[]>([]);
   const [risks, setRisks] = useState<CountryRisk[]>([]);
@@ -45,6 +64,8 @@ export default function GlobalStatusBar() {
   const [hoveredRisk, setHoveredRisk] = useState<CountryRisk | null>(null);
   const [ewsData, setEwsData] = useState<EWSData | null>(null);
   const [hoveredEWS, setHoveredEWS] = useState(false);
+  const [pizzaData, setPizzaData] = useState<PizzaIndexData | null>(null);
+  const [hoveredPPI, setHoveredPPI] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +102,18 @@ export default function GlobalStatusBar() {
     return () => clearInterval(iv);
   }, []);
 
+  useEffect(() => {
+    const fetchPPI = async () => {
+      try {
+        const res = await fetch('/api/pizza-index');
+        if (res.ok) setPizzaData(await res.json());
+      } catch { /* non-critical — badge stays hidden */ }
+    };
+    fetchPPI();
+    const iv = setInterval(fetchPPI, 15 * 60 * 1000); // 15 min
+    return () => clearInterval(iv);
+  }, []);
+
   const topRisks = risks.slice(0, 6);
   const cveCount = cyber?.stats?.active_cves || 0;
 
@@ -110,6 +143,30 @@ export default function GlobalStatusBar() {
   };
 
   const ewsBorderClass: Record<number, string> = {
+    1: 'border-[#4caf78]/25',
+    2: 'border-[#a8b840]/25',
+    3: 'border-[#d4a017]/25',
+    4: 'border-[#d4621a]/25',
+    5: 'border-[#c0392b]/25',
+  };
+
+  const ppiTextClass: Record<number, string> = {
+    1: 'text-[#4caf78]',
+    2: 'text-[#a8b840]',
+    3: 'text-[#d4a017]',
+    4: 'text-[#d4621a]',
+    5: 'text-[#c0392b]',
+  };
+
+  const ppiBgClass: Record<number, string> = {
+    1: 'bg-[#4caf78]',
+    2: 'bg-[#a8b840]',
+    3: 'bg-[#d4a017]',
+    4: 'bg-[#d4621a]',
+    5: 'bg-[#c0392b]',
+  };
+
+  const ppiBorderClass: Record<number, string> = {
     1: 'border-[#4caf78]/25',
     2: 'border-[#a8b840]/25',
     3: 'border-[#d4a017]/25',
@@ -178,6 +235,26 @@ export default function GlobalStatusBar() {
           </div>
         </div>
 
+        {/* PPI badge — hidden when unavailable; never throws */}
+        {pizzaData?.available && (
+          <div
+            className="flex-shrink-0 px-3 h-full flex items-center gap-1.5 border-l border-[var(--cyan-primary)]/30 bg-black pointer-events-auto relative z-10 cursor-help"
+            onMouseEnter={() => setHoveredPPI(true)}
+            onMouseLeave={() => setHoveredPPI(false)}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ppiBgClass[pizzaData.level ?? 1]}`}
+            />
+            <span className="text-[var(--cyan-primary)]/50">PPI</span>
+            <span className={`font-bold ${ppiTextClass[pizzaData.level ?? 1]}`}>
+              {pizzaData.level}
+            </span>
+            {pizzaData.stale && (
+              <span className="text-[var(--text-muted)]/40 text-[7px]">~</span>
+            )}
+          </div>
+        )}
+
         {/* EWS badge — hidden when unavailable; never throws */}
         {ewsData?.available && (
           <div
@@ -198,6 +275,38 @@ export default function GlobalStatusBar() {
           </div>
         )}
       </div>
+
+      {/* PPI hover tooltip */}
+      {pizzaData?.available && hoveredPPI && (
+        <div className="absolute bottom-[28px] right-0 z-[300] pointer-events-none">
+          <div
+            className={`glass-panel px-3 py-2 text-[10px] font-mono whitespace-nowrap ${ppiBorderClass[pizzaData.level ?? 1]}`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`font-bold ${ppiTextClass[pizzaData.level ?? 1]}`}>
+                🍕 PPI {pizzaData.level} — {PPI_LABELS[pizzaData.level ?? 1]}
+              </span>
+            </div>
+            <div className="text-[9px] text-[var(--text-secondary)] mb-1">
+              Pentagon Pizza Index — late-night DC activity proxy
+            </div>
+            <div className="flex flex-col gap-0.5 text-[9px]">
+              <span className="text-[var(--text-muted)]">
+                DC time: <span className="text-[var(--text-primary)]">{pizzaData.dcHour}:00{pizzaData.lateNight ? ' 🌙' : ''}</span>
+              </span>
+              <span className="text-[var(--text-muted)]">
+                Critical signals: <span className="text-[var(--text-primary)]">{pizzaData.criticalHits ?? '–'}</span>
+              </span>
+              <span className="text-[var(--text-muted)]">
+                Gov activity: <span className="text-[var(--text-primary)]">{pizzaData.elevatedHits ?? '–'}</span>
+              </span>
+              {pizzaData.stale && (
+                <span className="text-[var(--text-muted)]/60 italic">Cached data — upstream unavailable</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* EWS hover tooltip */}
       {ewsData?.available && hoveredEWS && (
