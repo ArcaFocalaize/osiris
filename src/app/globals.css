@@ -101,7 +101,9 @@ html, body {
 .styled-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .styled-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
 .styled-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
-.styled-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+@supports (scrollbar-width: thin) {
+  .styled-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    GLASS PANELS — Premium depth with micro-reflections
@@ -2040,12 +2042,10 @@ html, body {
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
-
-  /* Scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
-
+@supports (scrollbar-width: thin) {
+  .gotham-sidebar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+}
 .gotham-sidebar::-webkit-scrollbar { width: 3px; }
 .gotham-sidebar::-webkit-scrollbar-track { background: transparent; }
 .gotham-sidebar::-webkit-scrollbar-thumb {
