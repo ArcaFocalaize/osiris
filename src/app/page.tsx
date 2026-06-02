@@ -379,6 +379,11 @@ export default function Dashboard() {
       fetchEndpoint('/api/gdelt', d => ({ gdelt: d.events }));
       layerFetchedRef.current.add('gdelt');
     }
+    // GPS Jamming (data derived from flights API — load independently when toggled)
+    if (activeLayers.gps_jamming && !layerFetchedRef.current.has('gps_jamming')) {
+      fetchEndpoint('/api/flights');
+      layerFetchedRef.current.add('gps_jamming');
+    }
 
     // Submarine Cables
     if (activeLayers.cables && !layerFetchedRef.current.has('cables')) {
