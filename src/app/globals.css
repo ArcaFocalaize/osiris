@@ -1284,6 +1284,51 @@ html, body {
   animation: splash-progress-sweep 1.5s linear infinite;
 }
 
+/* ── Splash inline-style extractions ── */
+.splash-scanlines-drift {
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.015) 2px, rgba(212,175,55,0.015) 4px);
+  animation: splashScanDrift 8s linear infinite;
+}
+.splash-dot-gold {
+  background: var(--gold-primary);
+  box-shadow: 0 0 12px var(--gold-primary), 0 0 24px rgba(212,175,55,0.3);
+}
+.splash-dot-gold-dim {
+  background: rgba(212,175,55,0.5);
+  box-shadow: 0 0 6px rgba(212,175,55,0.3);
+}
+.splash-dot-cyan {
+  background: var(--cyan-primary);
+  box-shadow: 0 0 10px var(--cyan-primary), 0 0 20px rgba(0,229,255,0.2);
+}
+.splash-dot-cyan-dim {
+  background: rgba(0,229,255,0.4);
+}
+.splash-dot-gold-sm {
+  background: var(--gold-primary);
+  box-shadow: 0 0 8px var(--gold-primary);
+}
+.splash-crosshair-v {
+  background: linear-gradient(to bottom, transparent, rgba(212,175,55,0.3), transparent);
+}
+.splash-crosshair-h {
+  background: linear-gradient(to right, transparent, rgba(212,175,55,0.3), transparent);
+}
+.splash-progress-track-bg {
+  background: rgba(212,175,55,0.1);
+}
+.splash-progress-fill {
+  background: linear-gradient(90deg, var(--gold-primary), var(--cyan-primary), var(--gold-primary));
+  box-shadow: 0 0 12px rgba(212,175,55,0.4);
+}
+.splash-grid-bg {
+  background-image: linear-gradient(rgba(212,175,55,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.5) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hud-label-xs {
+  font-size: 6px;
+}
+
 /* ── Gotham Command Bar ── */
 .gotham-command-bar {
   display: flex;

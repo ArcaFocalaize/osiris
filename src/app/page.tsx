@@ -511,6 +511,11 @@ export default function Dashboard() {
   ), [data.commercial_flights, data.private_flights, data.private_jets, data.military_flights]);
 
 
+  const kpTextClass = spaceWeather ? (({
+    '#FF1744': 'text-[#FF1744]', '#FF3D3D': 'text-[#FF3D3D]', '#FF9500': 'text-[#FF9500]',
+    '#FFD700': 'text-[#FFD700]', '#D4AF37': 'text-[#D4AF37]', '#00E676': 'text-[#00E676]', '#555': 'text-[#555555]',
+  } as Record<string, string>)[spaceWeather.storm_color] ?? 'text-white') : 'text-white';
+
   return (
     <main className="fixed inset-0 w-full h-full bg-[var(--bg-void)] overflow-hidden">
 
@@ -525,10 +530,7 @@ export default function Dashboard() {
             style={{ background: 'radial-gradient(ellipse at center, #0a0a14 0%, var(--bg-void) 70%)' }}
           >
             {/* ── Scanline CRT overlay ── */}
-            <div className="absolute inset-0 pointer-events-none z-[1]" style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.015) 2px, rgba(212,175,55,0.015) 4px)',
-              animation: 'splashScanDrift 8s linear infinite',
-            }} />
+            <div className="absolute inset-0 pointer-events-none z-[1] splash-scanlines-drift" />
 
             {/* ── V4.2 badge — top-left ── */}
             <motion.div
@@ -552,8 +554,8 @@ export default function Dashboard() {
                 className="absolute inset-0 rounded-full"
                 style={{ border: '1px solid rgba(212,175,55,0.2)' }}
               >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full" style={{ background: 'var(--gold-primary)', boxShadow: '0 0 12px var(--gold-primary), 0 0 24px rgba(212,175,55,0.3)' }} />
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1 h-1 rounded-full" style={{ background: 'rgba(212,175,55,0.5)', boxShadow: '0 0 6px rgba(212,175,55,0.3)' }} />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full splash-dot-gold" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1 h-1 rounded-full splash-dot-gold-dim" />
               </motion.div>
 
               {/* Middle ring — faster counter-clockwise */}
@@ -564,8 +566,8 @@ export default function Dashboard() {
                 className="absolute rounded-full"
                 style={{ inset: '18px', border: '1px solid rgba(0,229,255,0.15)' }}
               >
-                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--cyan-primary)', boxShadow: '0 0 10px var(--cyan-primary), 0 0 20px rgba(0,229,255,0.2)' }} />
-                <div className="absolute bottom-0 left-1/4 translate-y-1/2 w-1 h-1 rounded-full" style={{ background: 'rgba(0,229,255,0.4)' }} />
+                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full splash-dot-cyan" />
+                <div className="absolute bottom-0 left-1/4 translate-y-1/2 w-1 h-1 rounded-full splash-dot-cyan-dim" />
               </motion.div>
 
               {/* Inner ring — fastest clockwise */}
@@ -576,7 +578,7 @@ export default function Dashboard() {
                 className="absolute rounded-full"
                 style={{ inset: '40px', border: '1px solid rgba(212,175,55,0.25)' }}
               >
-                <div className="absolute top-0 left-1/4 -translate-y-1/2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--gold-primary)', boxShadow: '0 0 8px var(--gold-primary)' }} />
+                <div className="absolute top-0 left-1/4 -translate-y-1/2 w-1.5 h-1.5 rounded-full splash-dot-gold-sm" />
               </motion.div>
 
               {/* Core circle + crosshair */}
@@ -594,8 +596,8 @@ export default function Dashboard() {
                   style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.4) 0%, rgba(212,175,55,0.05) 70%)' }}
                 />
                 {/* Crosshair lines */}
-                <div className="absolute w-[1px] h-full" style={{ background: 'linear-gradient(to bottom, transparent, rgba(212,175,55,0.3), transparent)' }} />
-                <div className="absolute w-full h-[1px]" style={{ background: 'linear-gradient(to right, transparent, rgba(212,175,55,0.3), transparent)' }} />
+                <div className="absolute w-[1px] h-full splash-crosshair-v" />
+                <div className="absolute w-full h-[1px] splash-crosshair-h" />
               </motion.div>
 
               {/* Faint pulsing radar sweep */}
@@ -632,7 +634,7 @@ export default function Dashboard() {
                 transition={{ delay: 1.2, duration: 0.8, ease: 'easeInOut' }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <p className="text-[10px] md:text-[11px] font-mono tracking-[0.5em] text-[var(--gold-primary)]" style={{ opacity: 0.8 }}>
+                <p className="text-[10px] md:text-[11px] font-mono tracking-[0.5em] text-[var(--gold-primary)] opacity-80">
                   GLOBAL INTELLIGENCE PLATFORM
                 </p>
               </motion.div>
@@ -641,7 +643,7 @@ export default function Dashboard() {
             {/* ── Multi-stage progress bar ── */}
             <div className="w-64 md:w-80 z-[2]">
               {/* Thin progress track */}
-              <div className="relative w-full h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(212,175,55,0.1)' }}>
+              <div className="relative w-full h-[2px] rounded-full overflow-hidden splash-progress-track-bg">
                 <motion.div
                   initial={{ width: '0%' }}
                   animate={{ width: ['0%', '25%', '50%', '78%', '100%'] }}
@@ -674,11 +676,8 @@ export default function Dashboard() {
             </div>
 
             {/* ── Decorative grid lines ── */}
-            <div className="absolute inset-0 pointer-events-none z-[0]" style={{ opacity: 0.03 }}>
-              <div className="absolute inset-0" style={{
-                backgroundImage: 'linear-gradient(rgba(212,175,55,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.5) 1px, transparent 1px)',
-                backgroundSize: '60px 60px',
-              }} />
+            <div className="absolute inset-0 pointer-events-none z-[0] opacity-[0.03]">
+              <div className="absolute inset-0 splash-grid-bg" />
             </div>
 
             {/* ── Corner frame accents ── */}
@@ -788,7 +787,7 @@ export default function Dashboard() {
 
         <span className="flex items-center gap-1">SYS: <span className={backendStatus === 'connected' ? 'text-[var(--alert-green)]' : 'text-[var(--alert-red)]'}>{backendStatus.toUpperCase()}</span></span>
 
-        {spaceWeather && <span className="hidden lg:inline">SOLAR: <span style={{ color: spaceWeather.storm_color, fontWeight: 700 }}>Kp{spaceWeather.kp_index}</span></span>}
+        {spaceWeather && <span className="hidden lg:inline">SOLAR: <span className={`font-bold ${kpTextClass}`}>Kp{spaceWeather.kp_index}</span></span>}
 
         <span className="hidden lg:inline-flex items-center gap-1">
           <span className="text-[var(--cyan-primary)] font-bold">{Object.values(activeLayers).filter(Boolean).length}</span>
@@ -802,7 +801,7 @@ export default function Dashboard() {
       {/* ── MOBILE: Compact top status ── */}
       {isMobile && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }} className="absolute top-3 right-3 z-[200] pointer-events-auto flex items-center gap-2">
-          <a href='https://ko-fi.com/M8D41ZYW4Z' target='_blank' className="glass-panel px-2 py-1 flex items-center gap-1.5 text-[7px] font-mono tracking-widest hover:opacity-80 transition-opacity border-[var(--gold-primary)]/40 bg-[var(--gold-primary)]/10">
+          <a href='https://ko-fi.com/M8D41ZYW4Z' target='_blank' rel="noopener noreferrer" className="glass-panel px-2 py-1 flex items-center gap-1.5 text-[7px] font-mono tracking-widest hover:opacity-80 transition-opacity border-[var(--gold-primary)]/40 bg-[var(--gold-primary)]/10">
             <div className="w-1 h-1 rounded-full bg-[var(--gold-primary)] animate-osiris-pulse" />
             <span className="text-[var(--gold-primary)] font-bold">SUPPORT PROJECT</span>
           </a>
@@ -817,7 +816,7 @@ export default function Dashboard() {
       {/* ── RIGHT TOOL STRIP ── */}
       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[250] pointer-events-auto bg-black/40 backdrop-blur-sm p-1 rounded-full border border-white/5">
         <div className="relative group">
-          <button onClick={() => { setShowIntel(!showIntel); setShowMarkets(false); setShowAlerts(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showIntel ? 'bg-[var(--cyan-primary)]/20' : 'hover:bg-white/10'}`}>
+          <button aria-label="OSINT / Recon" onClick={() => { setShowIntel(!showIntel); setShowMarkets(false); setShowAlerts(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showIntel ? 'bg-[var(--cyan-primary)]/20' : 'hover:bg-white/10'}`}>
             <Radar className={`w-4 h-4 ${showIntel ? 'text-[var(--cyan-primary)]' : 'text-white/60'}`} />
           </button>
           {/* OSINT / Recon Panel Slideout */}
@@ -837,7 +836,7 @@ export default function Dashboard() {
         </div>
 
         <div className="relative group">
-          <button onClick={() => { setShowMarkets(!showMarkets); setShowIntel(false); setShowAlerts(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showMarkets ? 'bg-[var(--gold-primary)]/20' : 'hover:bg-white/10'}`}>
+          <button aria-label="Markets" onClick={() => { setShowMarkets(!showMarkets); setShowIntel(false); setShowAlerts(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showMarkets ? 'bg-[var(--gold-primary)]/20' : 'hover:bg-white/10'}`}>
             <BarChart3 className={`w-4 h-4 ${showMarkets ? 'text-[var(--gold-primary)]' : 'text-white/60'}`} />
           </button>
           {/* Markets Panel Slideout */}
@@ -851,7 +850,7 @@ export default function Dashboard() {
         </div>
 
         <div className="relative group">
-          <button onClick={() => { setShowAlerts(!showAlerts); setShowIntel(false); setShowMarkets(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showAlerts ? 'bg-[#FF3D3D]/20' : 'hover:bg-white/10'}`}>
+          <button aria-label="Alerts" onClick={() => { setShowAlerts(!showAlerts); setShowIntel(false); setShowMarkets(false); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${showAlerts ? 'bg-[#FF3D3D]/20' : 'hover:bg-white/10'}`}>
             <AlertTriangle className={`w-4 h-4 ${showAlerts ? 'text-[#FF3D3D]' : 'text-white/60'}`} />
           </button>
           {/* Alerts Panel Slideout */}
@@ -901,7 +900,7 @@ export default function Dashboard() {
                     <span>Open in YouTube</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
-                  <button onClick={() => setLiveFeedUrl(null)} className="text-white/70 hover:text-white transition-colors p-1">
+                  <button aria-label="Close live feed" onClick={() => setLiveFeedUrl(null)} className="text-white/70 hover:text-white transition-colors p-1">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -912,6 +911,7 @@ export default function Dashboard() {
                 <div className="w-full aspect-video relative bg-black">
                   <iframe
                     src={liveFeedUrl}
+                    title={liveFeedName}
                     className="w-full h-full absolute inset-0"
                     allow="autoplay; encrypted-media"
                     allowFullScreen
@@ -991,17 +991,17 @@ export default function Dashboard() {
                     <span className="hud-text text-[9px] text-[var(--text-primary)]">
                       {mobilePanel === 'layers' ? 'LAYERS & STATS' : mobilePanel === 'markets' ? 'MARKETS & INTEL' : mobilePanel === 'intel' ? 'INTEL FEED' : mobilePanel === 'recon' ? 'OSIRIS RECON' : 'SEARCH'}
                     </span>
-                    <button onClick={() => setMobilePanel(null)} className="text-[var(--text-muted)] p-1"><X className="w-4 h-4" /></button>
+                    <button aria-label="Close panel" onClick={() => setMobilePanel(null)} className="text-[var(--text-muted)] p-1"><X className="w-4 h-4" /></button>
                   </div>
                   {mobilePanel === 'layers' && (
                     <>
                       <div className="glass-panel-sm p-2 mb-2">
                         <div className="grid grid-cols-5 gap-1 text-center">
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>AIR</div><div className="hud-value text-[9px]">{totalFlights.toLocaleString()}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>SAT</div><div className="hud-value text-[9px]">{(data.satellites?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>CAM</div><div className="hud-value text-[9px]">{(data.cameras?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>WX</div><div className="hud-value text-[9px]" style={{color:'var(--accent-weather)'}}>{(data.weather_events?.length||0)}</div></div>
-                          <div><div className="hud-label" style={{fontSize:'6px'}}>NUC</div><div className="hud-value text-[9px]" style={{color:'var(--accent-nuclear)'}}>{(data.infrastructure?.length||0)}</div></div>
+                          <div><div className="hud-label hud-label-xs">AIR</div><div className="hud-value text-[9px]">{totalFlights.toLocaleString()}</div></div>
+                          <div><div className="hud-label hud-label-xs">SAT</div><div className="hud-value text-[9px]">{(data.satellites?.length||0)}</div></div>
+                          <div><div className="hud-label hud-label-xs">CAM</div><div className="hud-value text-[9px]">{(data.cameras?.length||0)}</div></div>
+                          <div><div className="hud-label hud-label-xs">WX</div><div className="hud-value text-[9px] text-[var(--accent-weather)]">{(data.weather_events?.length||0)}</div></div>
+                          <div><div className="hud-label hud-label-xs">NUC</div><div className="hud-value text-[9px] text-[var(--accent-nuclear)]">{(data.infrastructure?.length||0)}</div></div>
                         </div>
                       </div>
                       <LayerPanel data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} isMobile={true} />
