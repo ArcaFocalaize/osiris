@@ -1,25 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronDown, ChevronUp, MapPin, ExternalLink, AlertTriangle,
+  ChevronDown, ChevronUp, MapPin, AlertTriangle,
   Newspaper, Clock, Radio, Maximize2, Minimize2
 } from 'lucide-react';
 
+type AlertType = 'news' | 'quake' | 'feed';
+type AlertSeverity = 'HIGH' | 'CRITICAL' | 'ELEVATED' | 'MODERATE' | 'LOW';
+
+interface NewsItem {
+  title?: string;
+  description?: string;
+  source?: string;
+  coords?: [number, number] | number[];
+  published?: string | number;
+  risk_score?: number;
+  link?: string;
+}
+
+interface EarthquakeItem {
+  magnitude: number;
+  place: string;
+  lat: number;
+  lng: number;
+  time?: string | number;
+}
+
+interface FeedItem {
+  name: string;
+  city: string;
+  country: string;
+  lat: number;
+  lng: number;
+  url: string;
+  category: string;
+  region: string;
+}
+
+interface AlertItem {
+  type: AlertType;
+  title: string;
+  description?: string;
+  source: string;
+  lat?: number;
+  lng?: number;
+  time?: string | number;
+  severity: AlertSeverity;
+  url?: string;
+  feedUrl?: string;
+  category?: string;
+}
+
 interface LiveAlertsProps {
-  data: any;
+  data: {
+    news?: NewsItem[];
+    earthquakes?: EarthquakeItem[];
+  };
   onLocate: (lat: number, lng: number) => void;
   onWatchFeed?: (url: string, name: string) => void;
 }
 
-const RISK_COLORS: Record<string, string> = {
-  HIGH: '#FF3D3D',
-  CRITICAL: '#FF1744',
-  ELEVATED: '#FF9500',
-  MODERATE: '#FFD700',
-  LOW: '#00E676',
+const SEVERITY_DOT_CLASS: Record<AlertSeverity, string> = {
+  CRITICAL: 'bg-[#FF1744] shadow-[0_0_6px_rgba(255,23,68,0.6)]',
+  HIGH: 'bg-[#FF3D3D] shadow-[0_0_6px_rgba(255,61,61,0.6)]',
+  ELEVATED: 'bg-[#FF9500] shadow-[0_0_6px_rgba(255,149,0,0.6)]',
+  MODERATE: 'bg-[#FFD700] shadow-[0_0_6px_rgba(255,215,0,0.6)]',
+  LOW: 'bg-[#00E676] shadow-[0_0_6px_rgba(0,230,118,0.6)]',
+};
+
+const SEVERITY_ICON_CLASS: Record<AlertSeverity, string> = {
+  CRITICAL: 'text-[#FF1744]',
+  HIGH: 'text-[#FF3D3D]',
+  ELEVATED: 'text-[#FF9500]',
+  MODERATE: 'text-[#FFD700]',
+  LOW: 'text-[#00E676]',
 };
 
 export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsProps) {
@@ -28,7 +85,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
   const [filter, setFilter] = useState<'all' | 'news' | 'quakes' | 'feeds'>('all');
 
   // Built-in live feeds — verified video IDs (synced with /api/live-news)
-  const BUILTIN_FEEDS = [
+  const BUILTIN_FEEDS: FeedItem[] = [
     // ── North America ──
     { name: 'NBC News NOW', city: 'New York', country: 'US', lat: 40.759, lng: -73.980, url: 'https://www.youtube-nocookie.com/embed/live_stream?channel=UCeY0bbntWzzVIaj2z3QigXg&autoplay=1&mute=1', category: 'mainstream', region: 'americas' },
     { name: 'CBS News 24/7', city: 'New York', country: 'US', lat: 40.764, lng: -73.973, url: 'https://www.youtube-nocookie.com/embed/live_stream?channel=UC8p1vwvWtl6T73JiExfWs1g&autoplay=1&mute=1', category: 'mainstream', region: 'americas' },
@@ -61,26 +118,36 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
   ];
 
   // Build unified alert feed
-  const alerts: any[] = [];
+  const alerts: AlertItem[] = [];
 
   // OSINT Telegram News Feed (from /api/news)
-  if (data.news) {
-    data.news.forEach((a: any) => {
+  if (Array.isArray(data.news)) {
+    data.news.forEach((a) => {
+      const riskScore = a.risk_score ?? 1;
       alerts.push({
-        type: 'news', title: a.title, description: a.description, source: a.source,
-        lat: a.coords?.[0], lng: a.coords?.[1], time: a.published,
-        severity: (a.risk_score ?? 1) >= 8 ? 'CRITICAL' : (a.risk_score ?? 1) >= 6 ? 'HIGH' : (a.risk_score ?? 1) >= 4 ? 'ELEVATED' : 'LOW',
+        type: 'news',
+        title: a.title ?? 'Untitled',
+        description: a.description,
+        source: a.source ?? 'Unknown',
+        lat: Array.isArray(a.coords) ? a.coords[0] : undefined,
+        lng: Array.isArray(a.coords) ? a.coords[1] : undefined,
+        time: a.published,
+        severity: riskScore >= 8 ? 'CRITICAL' : riskScore >= 6 ? 'HIGH' : riskScore >= 4 ? 'ELEVATED' : 'LOW',
         url: a.link,
       });
     });
   }
 
   // Earthquakes
-  if (data.earthquakes) {
-    data.earthquakes.slice(0, 5).forEach((eq: any) => {
+  if (Array.isArray(data.earthquakes)) {
+    data.earthquakes.slice(0, 5).forEach((eq) => {
       alerts.push({
-        type: 'quake', title: `M${eq.magnitude} - ${eq.place}`, source: 'USGS',
-        lat: eq.lat, lng: eq.lng, time: eq.time,
+        type: 'quake',
+        title: `M${eq.magnitude} - ${eq.place}`,
+        source: 'USGS',
+        lat: eq.lat,
+        lng: eq.lng,
+        time: eq.time,
         severity: eq.magnitude >= 6 ? 'CRITICAL' : eq.magnitude >= 4.5 ? 'HIGH' : 'MODERATE',
       });
     });
@@ -111,8 +178,7 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
   };
 
   // Ensure portal only renders on client
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = typeof document !== 'undefined';
 
   const content = (
     <motion.div
@@ -122,21 +188,20 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
       className={`glass-panel flex flex-col overflow-hidden pointer-events-auto transition-all duration-300 ${maximized ? 'fixed inset-4 z-[9999] bg-[#0a0a09]/95 backdrop-blur-3xl' : 'shrink-0 h-[500px] max-h-[80vh] resize-y'}`}
     >
       {/* Header - Fixed Height, Never Shrinks */}
-      <div
-        onClick={() => setExpanded(!expanded)}
-        role="button"
-        tabIndex={0}
-        className="flex-shrink-0 flex items-center justify-between px-3 py-2 hover:bg-[var(--hover-accent)] transition-colors cursor-pointer outline-none border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)]"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)]">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2 hover:bg-[var(--hover-accent)] transition-colors cursor-pointer outline-none -ml-1 px-1 rounded"
+          type="button"
+        >
           <Radio className="w-3.5 h-3.5 text-[#FF4081]" />
           <span className="hud-text text-[10px] text-[var(--text-primary)]">LIVE ALERTS</span>
-          <span className="gotham-tag gotham-tag--high" style={{ fontSize: '7px', padding: '1px 5px' }}>{alerts.filter(a => a.type === 'news' || a.type === 'quake').length}</span>
-          <span className="gotham-tag gotham-tag--info" style={{ fontSize: '7px', padding: '1px 4px' }}>{BUILTIN_FEEDS.length} FEEDS</span>
-        </div>
+          <span className="gotham-tag gotham-tag--high text-[7px] px-[5px] py-[1px]">{alerts.filter(a => a.type === 'news' || a.type === 'quake').length}</span>
+          <span className="gotham-tag gotham-tag--info text-[7px] px-[4px] py-[1px]">{BUILTIN_FEEDS.length} FEEDS</span>
+        </button>
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FF4081] animate-osiris-pulse" />
-          <button onClick={(e) => { e.stopPropagation(); setMaximized(!maximized); if (!expanded && !maximized) setExpanded(true); }} className="hover:text-white transition-colors" title={maximized ? "Restore" : "Maximize"}>
+          <button type="button" onClick={() => { setMaximized(!maximized); if (!expanded && !maximized) setExpanded(true); }} className="hover:text-white transition-colors" title={maximized ? 'Restore' : 'Maximize'}>
             {maximized ? <Minimize2 className="w-3 h-3 text-[var(--text-muted)]" /> : <Maximize2 className="w-3 h-3 text-[var(--text-muted)]" />}
           </button>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-[var(--text-muted)]" /> : <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
@@ -170,7 +235,8 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
               <div className="space-y-2">
                 {filtered.map((alert, i) => {
                   const Icon = getIcon(alert.type);
-                const sevColor = RISK_COLORS[alert.severity] || '#FFD700';
+                const sevColorClass = SEVERITY_DOT_CLASS[alert.severity] || SEVERITY_DOT_CLASS.MODERATE;
+                const iconColorClass = SEVERITY_ICON_CLASS[alert.severity] || SEVERITY_ICON_CLASS.MODERATE;
                 return (
                   <div
                     key={i}
@@ -187,12 +253,12 @@ export default function LiveAlerts({ data, onLocate, onWatchFeed }: LiveAlertsPr
                     <div className="flex items-start gap-2.5">
                       {/* Severity indicator */}
                       <div className="flex-shrink-0 mt-1">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: sevColor, boxShadow: `0 0 6px ${sevColor}60` }} />
+                        <div className={`w-2 h-2 rounded-full ${sevColorClass}`} />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-1.5 mb-2">
-                          <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-[2px]" style={{ color: sevColor }} />
+                          <Icon className={`w-3.5 h-3.5 flex-shrink-0 mt-[2px] ${iconColorClass}`} />
                           <span className={`text-[10px] font-mono text-[#E8E6E0] leading-relaxed ${alert.type === 'news' ? 'line-clamp-3' : 'truncate'}`}>
                             {(alert.description || alert.title || '').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
                           </span>

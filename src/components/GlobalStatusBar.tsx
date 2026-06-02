@@ -6,6 +6,22 @@ import { motion } from 'framer-motion';
 interface Exchange { name: string; country: string; open: boolean; }
 interface CountryRisk { code: string; risk_score: number; risk_level: string; tags: string[]; }
 
+interface EWSData {
+  available: boolean;
+  stale?: boolean;
+  emergencyLevel?: number;
+  alertLevel?: string;
+  zScore?: number;
+  matchedCount?: number;
+  airborneCount?: number;
+}
+
+interface CyberData {
+  stats?: {
+    active_cves?: number;
+  };
+}
+
 const RISK_TOOLTIPS: Record<string, string> = {
   CRITICAL: 'Active conflict, sanctions, or major instability detected',
   HIGH: 'Elevated threat level — ongoing tensions or security concerns',
@@ -13,12 +29,22 @@ const RISK_TOOLTIPS: Record<string, string> = {
   LOW: 'Stable — no significant threats detected',
 };
 
+const EWS_LABELS: Record<number, string> = {
+  1: 'NORMAL',
+  2: 'WATCH',
+  3: 'ELEVATED',
+  4: 'WARNING',
+  5: 'ALARM',
+};
+
 export default function GlobalStatusBar() {
   const [exchanges, setExchanges] = useState<Exchange[]>([]);
   const [risks, setRisks] = useState<CountryRisk[]>([]);
-  const [cyber, setCyber] = useState<any>(null);
+  const [cyber, setCyber] = useState<CyberData | null>(null);
   const [openCount, setOpenCount] = useState(0);
   const [hoveredRisk, setHoveredRisk] = useState<CountryRisk | null>(null);
+  const [ewsData, setEwsData] = useState<EWSData | null>(null);
+  const [hoveredEWS, setHoveredEWS] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,15 +65,57 @@ export default function GlobalStatusBar() {
       } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
     };
     fetchData();
-    const iv = setInterval(fetchData, 1800000); // 30 min (was 5 min)
+    const iv = setInterval(fetchData, 1800000); // 30 min
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    const fetchEWS = async () => {
+      try {
+        const res = await fetch('/api/ews-index');
+        if (res.ok) setEwsData(await res.json());
+      } catch { /* non-critical — badge stays hidden */ }
+    };
+    fetchEWS();
+    const iv = setInterval(fetchEWS, 10 * 60 * 1000); // 10 min — matches upstream update cadence
     return () => clearInterval(iv);
   }, []);
 
   const topRisks = risks.slice(0, 6);
   const cveCount = cyber?.stats?.active_cves || 0;
 
-  const riskColor = (level: string) =>
-    level === 'CRITICAL' ? '#FF3D3D' : level === 'HIGH' ? '#FF9500' : level === 'ELEVATED' ? '#FFD700' : '#00E676';
+  const riskTextClass = (level: string) =>
+    level === 'CRITICAL' ? 'text-[#FF3D3D]' : level === 'HIGH' ? 'text-[#FF9500]' : level === 'ELEVATED' ? 'text-[#FFD700]' : 'text-[#00E676]';
+
+  const riskBorderClass = (level: string) =>
+    level === 'CRITICAL' ? 'border-[#FF3D3D]/25' : level === 'HIGH' ? 'border-[#FF9500]/25' : level === 'ELEVATED' ? 'border-[#FFD700]/25' : 'border-[#00E676]/25';
+
+  const riskTagClass = (level: string) =>
+    level === 'CRITICAL' ? 'bg-[#FF3D3D]/15 text-[#FF3D3D]' : level === 'HIGH' ? 'bg-[#FF9500]/15 text-[#FF9500]' : level === 'ELEVATED' ? 'bg-[#FFD700]/15 text-[#FFD700]' : 'bg-[#00E676]/15 text-[#00E676]';
+
+  const ewsTextClass: Record<number, string> = {
+    1: 'text-[#4caf78]',
+    2: 'text-[#a8b840]',
+    3: 'text-[#d4a017]',
+    4: 'text-[#d4621a]',
+    5: 'text-[#c0392b]',
+  };
+
+  const ewsBgClass: Record<number, string> = {
+    1: 'bg-[#4caf78]',
+    2: 'bg-[#a8b840]',
+    3: 'bg-[#d4a017]',
+    4: 'bg-[#d4621a]',
+    5: 'bg-[#c0392b]',
+  };
+
+  const ewsBorderClass: Record<number, string> = {
+    1: 'border-[#4caf78]/25',
+    2: 'border-[#a8b840]/25',
+    3: 'border-[#d4a017]/25',
+    4: 'border-[#d4621a]/25',
+    5: 'border-[#c0392b]/25',
+  };
 
   const countryFlag = (code: string) => {
     try {
@@ -74,7 +142,7 @@ export default function GlobalStatusBar() {
           onMouseLeave={() => setHoveredRisk(null)}
         >
           <span className="text-[10px]">{countryFlag(r.code)}</span>
-          <span style={{ color: riskColor(r.risk_level) }} className="font-bold">{r.risk_score}</span>
+          <span className={`font-bold ${riskTextClass(r.risk_level)}`}>{r.risk_score}</span>
         </span>
       ))}
       <span className="text-[var(--border-primary)] mx-1">|</span>
@@ -92,9 +160,9 @@ export default function GlobalStatusBar() {
       transition={{ delay: 4, duration: 0.8 }}
       className="hidden md:block absolute bottom-0 left-0 right-0 z-[198] pointer-events-none"
     >
-      <div className="h-[22px] overflow-hidden bg-black/90 border-t border-[var(--cyan-primary)]/40 flex items-center text-[8px] font-mono tracking-wider backdrop-blur-md relative" style={{ boxShadow: '0 -4px 20px rgba(0, 229, 255, 0.1)' }}>
+      <div className="h-[22px] overflow-hidden bg-black/90 border-t border-[var(--cyan-primary)]/40 flex items-center text-[8px] font-mono tracking-wider backdrop-blur-md relative shadow-[0_-4px_20px_rgba(0,229,255,0.1)]">
         {/* Animated glitch line overlay */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--cyan-primary)] to-transparent opacity-50" style={{ animation: 'hud-scanline 3s linear infinite' }} />
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--cyan-primary)] to-transparent opacity-50 animate-[hud-scanline_3s_linear_infinite]" />
         
         {/* Static label */}
         <div className="flex-shrink-0 px-3 h-full flex items-center gap-1 border-r border-[var(--cyan-primary)]/30 bg-black pointer-events-auto relative z-10 shadow-[4px_0_10px_rgba(0,0,0,0.5)]">
@@ -103,23 +171,75 @@ export default function GlobalStatusBar() {
         </div>
 
         {/* CSS-animated ticker */}
-        <div className="flex-1 overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+        <div className="flex-1 overflow-hidden relative [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
           <div className="flex items-center animate-ticker whitespace-nowrap">
             {tickerContent}
             {tickerContent}
           </div>
         </div>
+
+        {/* EWS badge — hidden when unavailable; never throws */}
+        {ewsData?.available && (
+          <div
+            className="flex-shrink-0 px-3 h-full flex items-center gap-1.5 border-l border-[var(--cyan-primary)]/30 bg-black pointer-events-auto relative z-10 cursor-help"
+            onMouseEnter={() => setHoveredEWS(true)}
+            onMouseLeave={() => setHoveredEWS(false)}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ewsBgClass[ewsData.emergencyLevel ?? 1]}`}
+            />
+            <span className="text-[var(--cyan-primary)]/50">EWS</span>
+            <span className={`font-bold ${ewsTextClass[ewsData.emergencyLevel ?? 1]}`}>
+              {ewsData.emergencyLevel}
+            </span>
+            {ewsData.stale && (
+              <span className="text-[var(--text-muted)]/40 text-[7px]">~</span>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* EWS hover tooltip */}
+      {ewsData?.available && hoveredEWS && (
+        <div className="absolute bottom-[28px] right-0 z-[300] pointer-events-none">
+          <div
+            className={`glass-panel px-3 py-2 text-[10px] font-mono whitespace-nowrap ${ewsBorderClass[ewsData.emergencyLevel ?? 1]}`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`font-bold ${ewsTextClass[ewsData.emergencyLevel ?? 1]}`}>
+                EWS {ewsData.emergencyLevel} — {EWS_LABELS[ewsData.emergencyLevel ?? 1]}
+              </span>
+            </div>
+            <div className="text-[9px] text-[var(--text-secondary)] mb-1">
+              Elite private-jet evacuation index
+            </div>
+            <div className="flex flex-col gap-0.5 text-[9px]">
+              <span className="text-[var(--text-muted)]">
+                Z-score: <span className="text-[var(--text-primary)]">{ewsData.zScore?.toFixed(2) ?? '–'}</span>
+              </span>
+              <span className="text-[var(--text-muted)]">
+                Matched jets: <span className="text-[var(--text-primary)]">{ewsData.matchedCount ?? '–'}</span>
+              </span>
+              <span className="text-[var(--text-muted)]">
+                Total airborne: <span className="text-[var(--text-primary)]">{ewsData.airborneCount?.toLocaleString() ?? '–'}</span>
+              </span>
+              {ewsData.stale && (
+                <span className="text-[var(--text-muted)]/60 italic">Cached data — upstream unavailable</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hover tooltip for risk scores */}
       {hoveredRisk && (
         <div
           className="absolute bottom-[28px] left-1/2 -translate-x-1/2 z-[300] pointer-events-none"
         >
-          <div className="glass-panel px-3 py-2 text-[10px] font-mono text-center whitespace-nowrap" style={{ borderColor: `${riskColor(hoveredRisk.risk_level)}40` }}>
+          <div className={`glass-panel px-3 py-2 text-[10px] font-mono text-center whitespace-nowrap ${riskBorderClass(hoveredRisk.risk_level)}`}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[12px]">{countryFlag(hoveredRisk.code)}</span>
-              <span className="font-bold" style={{ color: riskColor(hoveredRisk.risk_level) }}>
+              <span className={`font-bold ${riskTextClass(hoveredRisk.risk_level)}`}>
                 {hoveredRisk.risk_level}
               </span>
               <span className="text-[var(--text-muted)]">Score: {hoveredRisk.risk_score}/100</span>
@@ -130,7 +250,7 @@ export default function GlobalStatusBar() {
             {hoveredRisk.tags?.length > 0 && (
               <div className="flex gap-1 mt-1 justify-center flex-wrap">
                 {hoveredRisk.tags.slice(0, 3).map(t => (
-                  <span key={t} className="px-1.5 py-0.5 rounded text-[8px]" style={{ backgroundColor: `${riskColor(hoveredRisk.risk_level)}15`, color: riskColor(hoveredRisk.risk_level) }}>
+                  <span key={t} className={`px-1.5 py-0.5 rounded text-[8px] ${riskTagClass(hoveredRisk.risk_level)}`}>
                     {t}
                   </span>
                 ))}
