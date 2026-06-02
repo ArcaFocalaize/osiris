@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  osiris-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: osiris-dev
+    ports:
+      - "3000:3000"  # Next.js app
+      - "9229:9229"  # Node.js debugger
+    volumes:
+      # Hot reload - monta il codice sorgente
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./scripts:/app/scripts
+      # Configurazione
+      - ./next.config.ts:/app/next.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tailwind.config.js:/app/tailwind.config.js
+      # Non montare node_modules (usa quelli del container)
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true  # Fix hot-reload su Windows
+      - CHOKIDAR_USEPOLLING=true
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - osiris-net
+
+networks:
+  osiris-net:
+    driver: bridge
