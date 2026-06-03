@@ -204,7 +204,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         case 'tech': url = `/api/scanner?target=${encodeURIComponent(query)}&type=tech`; break;
         case 'shodan': url = `https://internetdb.shodan.io/${encodeURIComponent(query)}`; break;
       }
-      const res = await fetch(url, activeTab === 'shodan' ? { cache: 'no-store' } : undefined);
+      const res = await fetch(url, activeTab === 'shodan' ? { cache: 'no-store', signal: controller.signal } : { signal: controller.signal });
       if (activeTab === 'shodan' && res.status === 404) {
         setResults({ ip: query, status: 'No Shodan InternetDB records found', ports: [], cpes: [], hostnames: [], tags: [], vulns: [] });
         setLoading(false);
@@ -213,6 +213,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       const data = await res.json();
       if (res.ok) {
         setResults(data);
+        if (activeTab !== 'shodan') resultCacheRef.current.set(cacheKey, { data, ts: Date.now() });
         setHistory(prev => [{ tab: activeTab, query, time: new Date().toLocaleTimeString() }, ...prev.slice(0, 9)]);
         
         // Geolocate the target in the background
@@ -234,8 +235,14 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       } else {
         setError(data.error || 'Lookup failed');
       }
-    } catch { setError('Network error'); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return; // superseded by a newer lookup
+      setError('Network error');
+    }
+    finally {
+      // Only clear loading if this is still the active request.
+      if (abortRef.current === controller) setLoading(false);
+    }
   }, [query, activeTab, scanType, loading, sweepCidr]);
 
   const currentTab = TABS.find(t => t.id === activeTab);
