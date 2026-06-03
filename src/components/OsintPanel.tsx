@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -51,6 +51,18 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
   const [cveCache, setCveCache] = useState<Record<string, any>>({});
   const [expandedDevice, setExpandedDevice] = useState<string | null>(null);
 
+  // Cancels the in-flight lookup when a new one starts or the tab changes.
+  const abortRef = useRef<AbortController | null>(null);
+  // Client-side result cache (tab+query → data) with a short TTL to avoid
+  // re-fetching when the user flips back to a recently queried tab.
+  const resultCacheRef = useRef<Map<string, { data: any; ts: number }>>(new Map());
+  const RESULT_CACHE_TTL = 120_000;
+
+  // Abort any in-flight request when switching tabs.
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, [activeTab]);
+
   // Fetch CVE details when a device is expanded in full-screen mode
   const fetchCveDetails = useCallback(async (cveIds: string[]) => {
     const missing = cveIds.filter(id => !cveCache[id]);
@@ -71,6 +83,11 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         if (r.status === 'fulfilled') {
           next[r.value.id] = r.value.data;
         }
+      }
+      // Keep the CVE cache bounded (LRU-ish by insertion order).
+      const keys = Object.keys(next);
+      if (keys.length > 200) {
+        for (const k of keys.slice(0, keys.length - 200)) delete next[k];
       }
       return next;
     });
@@ -149,6 +166,22 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       }
       return;
     }
+
+    // Serve from client cache when fresh (skip for live Shodan lookups).
+    const cacheKey = `${activeTab}:${query.trim().toLowerCase()}`;
+    if (activeTab !== 'shodan') {
+      const hit = resultCacheRef.current.get(cacheKey);
+      if (hit && Date.now() - hit.ts < RESULT_CACHE_TTL) {
+        setResults(hit.data);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Cancel any previous in-flight lookup before starting a new one.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       let url = '';
