@@ -185,25 +185,25 @@ export default function GlobalStatusBar() {
   const tickerContent = (
     <>
       {exchanges.map(ex => (
-        <span key={ex.name} className="inline-flex items-center gap-0.5 mx-2">
+        <span key={ex.name} className="inline-flex items-center gap-1 mx-2.5">
           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ex.open ? 'bg-[var(--alert-green)]' : 'bg-[var(--text-muted)]/30'}`} />
           <span className={`${ex.open ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]/40'}`}>{ex.name}</span>
         </span>
       ))}
-      <span className="text-[var(--border-primary)] mx-1">|</span>
+      <span className="text-[var(--border-primary)] mx-1.5">|</span>
       {topRisks.map(r => (
         <span
           key={r.code}
-          className="inline-flex items-center gap-0.5 mx-1.5 relative cursor-help pointer-events-auto"
+          className="inline-flex items-center gap-1 mx-2 relative cursor-help pointer-events-auto"
           onMouseEnter={() => setHoveredRisk(r)}
           onMouseLeave={() => setHoveredRisk(null)}
         >
-          <span className="text-[10px]">{countryFlag(r.code)}</span>
+          <span className="text-[13px]">{countryFlag(r.code)}</span>
           <span className={`font-bold ${riskTextClass(r.risk_level)}`}>{r.risk_score}</span>
         </span>
       ))}
-      <span className="text-[var(--border-primary)] mx-1">|</span>
-      <span className="inline-flex items-center gap-1 mx-2">
+      <span className="text-[var(--border-primary)] mx-1.5">|</span>
+      <span className="inline-flex items-center gap-1.5 mx-2.5">
         <span className="text-[#E040FB]">CYBER</span>
         <span className="text-[var(--text-primary)]">{cveCount} CVEs</span>
       </span>
@@ -217,12 +217,12 @@ export default function GlobalStatusBar() {
       transition={{ delay: 4, duration: 0.8 }}
       className="hidden md:block absolute bottom-0 left-0 right-0 z-[198] pointer-events-none"
     >
-      <div className="h-[22px] overflow-hidden bg-black/90 border-t border-[var(--cyan-primary)]/40 flex items-center text-[8px] font-mono tracking-wider backdrop-blur-md relative shadow-[0_-4px_20px_rgba(0,229,255,0.1)]">
+      <div className="h-[30px] overflow-hidden bg-black/90 border-t border-[var(--cyan-primary)]/40 flex items-center text-[11px] font-mono tracking-wider backdrop-blur-md relative shadow-[0_-4px_20px_rgba(0,229,255,0.1)]">
         {/* Animated glitch line overlay */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--cyan-primary)] to-transparent opacity-50 animate-[hud-scanline_3s_linear_infinite]" />
         
         {/* Static label */}
-        <div className="flex-shrink-0 px-3 h-full flex items-center gap-1 border-r border-[var(--cyan-primary)]/30 bg-black pointer-events-auto relative z-10 shadow-[4px_0_10px_rgba(0,0,0,0.5)]">
+        <div className="flex-shrink-0 px-4 h-full flex items-center gap-1.5 border-r border-[var(--cyan-primary)]/30 bg-black pointer-events-auto relative z-10 shadow-[4px_0_10px_rgba(0,0,0,0.5)]">
           <span className="text-[var(--cyan-primary)]/50">MKT</span>
           <span className="text-[var(--cyan-primary)] font-bold">{openCount}/{exchanges.length}</span>
         </div>

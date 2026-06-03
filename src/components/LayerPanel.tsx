@@ -1,7 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo } from 'react';
 import {
   Plane, Satellite, Activity, Sun, AlertTriangle, Camera, Flame, Target,
   CloudLightning, Radiation, Tv, Anchor, Ship, Newspaper,
@@ -97,8 +96,6 @@ function Shield(props: any) {
 }
 
 function LayerPanel({ data, activeLayers, setActiveLayers, isMobile }: LayerPanelProps) {
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
-
   const toggle = (key: string) => setActiveLayers((prev: any) => ({ ...prev, [key]: !prev[key] }));
   
   const getCount = (dk: string): number | null => {
@@ -171,95 +168,88 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile }: LayerPane
   }
 
   return (
-    <div className="absolute top-0 left-0 h-full w-[80px] border-r border-white/5 flex flex-col pt-32 pb-8 z-50 pointer-events-auto bg-black/20 backdrop-blur-[2px]">
-      
-      <div className="flex-1 flex flex-col gap-8 px-2">
+    <div className="absolute top-0 left-0 h-full w-[218px] border-r border-[var(--border-secondary)] flex flex-col pt-28 pb-10 z-50 pointer-events-auto bg-black/45 backdrop-blur-md styled-scrollbar overflow-y-auto">
+
+      <div className="px-6 mb-4">
+        <div className="text-[10px] font-mono font-bold tracking-[0.28em] text-[var(--text-muted)] uppercase">Layers</div>
+        <div className="mt-1 h-px w-full bg-gradient-to-r from-[var(--border-primary)] to-transparent" />
+      </div>
+
+      <div className="flex-1 flex flex-col gap-5 px-3">
         {LAYER_GROUPS.map((group) => {
           const groupActiveCount = group.layers.filter(l => activeLayers[l.key]).length;
           const isActive = groupActiveCount > 0;
-          const isHovered = hoveredGroup === group.label;
 
           return (
-            <div 
-              key={group.label} 
-              className="relative flex justify-center items-center"
-              onMouseEnter={() => setHoveredGroup(group.label)}
-              onMouseLeave={() => setHoveredGroup(null)}
-            >
-              {/* The Vertical Label */}
-              <div 
-                className={`text-[10px] font-mono font-bold cursor-pointer select-none transition-all duration-300 flex items-center justify-center`}
-                style={{
-                  writingMode: 'horizontal-tb',
-                  color: isActive ? group.color : 'rgba(255, 255, 255, 0.4)',
-                  textShadow: isActive ? `0 0 10px ${group.color}80` : 'none',
-                  letterSpacing: '0.1em',
-                  opacity: isActive || isHovered ? 1 : 0.5,
-                }}
-              >
-                {/* Active Indicator dot */}
-                {isActive && (
-                  <div 
-                    className="absolute -left-1 w-1 h-1 rounded-full animate-pulse"
-                    style={{ backgroundColor: group.color, boxShadow: `0 0 8px ${group.color}` }}
-                  />
+            <div key={group.label} className="flex flex-col gap-1.5">
+              {/* Group header */}
+              <div className="flex items-center gap-2.5 pl-3 pr-1">
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0 transition-all"
+                  style={{
+                    backgroundColor: isActive ? group.color : 'rgba(255,255,255,0.18)',
+                    boxShadow: isActive ? `0 0 10px ${group.color}` : 'none',
+                  }}
+                />
+                <span
+                  className="text-[12px] font-mono font-bold tracking-[0.1em] uppercase transition-colors"
+                  style={{ color: isActive ? group.color : 'rgba(255,255,255,0.58)' }}
+                >
+                  {group.fullLabel}
+                </span>
+                {groupActiveCount > 0 && (
+                  <span className="ml-auto text-[10px] font-mono tabular-nums text-[var(--text-muted)]">
+                    {groupActiveCount}
+                  </span>
                 )}
-                {group.label}
               </div>
 
-              {/* Slide-out Menu */}
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, x: -5, filter: 'blur(2px)' }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute left-[70px] top-1/2 -translate-y-1/2 min-w-[240px] bg-black/80 backdrop-blur-md border border-white/10 rounded-lg p-3 shadow-2xl z-50 pointer-events-auto"
-                    style={{
-                      boxShadow: `0 0 30px ${group.color}15, inset 0 0 20px ${group.color}05`
-                    }}
-                  >
-                    <div className="text-[11px] font-bold font-mono mb-3 tracking-widest border-b border-white/10 pb-2" style={{ color: group.color }}>
-                      {group.fullLabel}
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {group.layers.map((layer) => {
-                        const isLayerActive = activeLayers[layer.key];
-                        const count = getCount(layer.dataKey);
-                        const Icon = layer.icon || Shield;
-                        
-                        return (
-                          <button
-                            key={layer.key}
-                            onClick={() => {
-                              if (layer.key === 'sdk_ransomware') {
-                                alert('Ransomware Feed - Coming Soon');
-                              } else {
-                                toggle(layer.key);
-                              }
-                            }}
-                            className="w-full flex items-center gap-3 px-2 py-1.5 rounded bg-transparent hover:bg-white/5 transition-colors group"
-                          >
-                            <div 
-                              className={`w-2 h-2 rounded-full border flex-shrink-0 transition-all duration-300 ${isLayerActive ? 'bg-current border-current scale-100' : 'bg-transparent border-white/30 scale-75'}`}
-                              style={{ color: isLayerActive ? layer.color : 'inherit', boxShadow: isLayerActive ? `0 0 8px ${layer.color}` : 'none' }}
-                            />
-                            <span className={`text-[11px] font-mono uppercase tracking-wider flex-1 text-left transition-colors duration-200 ${isLayerActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}>
-                              {layer.label}
-                            </span>
-                            {count !== null && (
-                              <span className="text-[9px] font-mono tabular-nums opacity-60">
-                                {count.toLocaleString()}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Layer rows — always visible */}
+              <div className="flex flex-col gap-0.5 pl-2">
+                {group.layers.map((layer) => {
+                  const isLayerActive = activeLayers[layer.key];
+                  const count = getCount(layer.dataKey);
+                  const Icon = layer.icon || Shield;
+
+                  return (
+                    <button
+                      key={layer.key}
+                      onClick={() => {
+                        if (layer.key === 'sdk_ransomware') {
+                          alert('Ransomware Feed - Coming Soon');
+                        } else {
+                          toggle(layer.key);
+                        }
+                      }}
+                      className={`group w-full flex items-center gap-2.5 pl-4 pr-2.5 py-2 rounded-md border transition-colors ${
+                        isLayerActive
+                          ? 'bg-white/[0.07] border-white/10'
+                          : 'bg-transparent border-transparent hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <Icon
+                        className="w-4 h-4 flex-shrink-0 transition-colors"
+                        style={{ color: isLayerActive ? layer.color : 'rgba(255,255,255,0.35)' }}
+                        strokeWidth={2}
+                      />
+                      <span
+                        className={`text-[12px] font-medium tracking-wide flex-1 text-left transition-colors ${
+                          isLayerActive
+                            ? 'text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {layer.label}
+                      </span>
+                      {count !== null && (
+                        <span className="text-[10px] font-mono tabular-nums text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]">
+                          {count.toLocaleString()}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           );
         })}
