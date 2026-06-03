@@ -4,15 +4,16 @@ import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Radar, Globe, Shield, FileText, Radio,
+  Search, Radar, Globe, Shield, FileText,
   ChevronDown, ChevronUp, Loader2, AlertTriangle, Server,
-  Wifi, Lock, MapPin, Bug, Code, Layers, Network, Fingerprint,
+  Wifi, Lock, Bug, Code, Layers, Network, Fingerprint,
   CheckCircle, XCircle, Clock, ExternalLink, Crosshair,
-  Maximize2, Minimize2, Gavel, Bitcoin, Phone, Terminal, ShieldAlert, UserSearch
+  Maximize2, Minimize2, Phone, Terminal, ShieldAlert, UserSearch, Workflow
 } from 'lucide-react';
 import { ipToNumber, numberToIp, calculateSubnetStart, classifyDevice, assessRisk, batchFetch, ShodanInternetDBResponse, SweepDevice } from '@/lib/osint-utils';
 
 const TABS = [
+  { id: 'dossier', label: 'DOSSIER', icon: Workflow, placeholder: 'Target: email, domain, IP, username or name', color: '#FF6B35' },
   { id: 'scanner', label: 'PORT SCAN', icon: Radar, placeholder: 'IP or hostname', color: '#00E5FF' },
   { id: 'vuln', label: 'VULN SWEEP', icon: Bug, placeholder: 'IP or hostname', color: '#FF3D3D' },
 
@@ -34,7 +35,7 @@ const TABS = [
   { id: 'sweep', label: 'IP SWEEP', icon: Crosshair, placeholder: 'Enter IP address (e.g. 8.8.8.8)', color: '#FF3D3D' },
 ];
 
-interface OsintPanelProps { isOpen?: boolean; onClose?: () => void; isMobile?: boolean; onSweepVisualize?: (data: any) => void; onScanGeolocate?: (target: string, data: any) => void; }
+interface OsintPanelProps { isOpen?: boolean; onClose?: () => void; isMobile?: boolean; onSweepVisualize?: (data: unknown) => void; onScanGeolocate?: (target: string, data: any) => void; }
 
 function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintPanelProps) {
   const [activeTab, setActiveTab] = useState('scanner');
@@ -197,6 +198,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         case 'phone': url = `/api/osint/phone?number=${encodeURIComponent(query)}`; break;
         case 'leaks': url = `/api/osint/leaks?email=${encodeURIComponent(query)}`; break;
         case 'username': url = `/api/osint/username?user=${encodeURIComponent(query)}`; break;
+        case 'dossier': url = `/api/osint/orchestrate?target=${encodeURIComponent(query)}`; break;
         case 'crypto': url = `/api/osint/crypto?address=${encodeURIComponent(query)}`; break;
         case 'github': url = `/api/osint/github?user=${encodeURIComponent(query)}`; break;
         case 'scanner': url = `/api/scanner?target=${encodeURIComponent(query)}&type=${scanType}`; break;
@@ -223,7 +225,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
           if (data.lat && data.lng && onScanGeolocate) {
              onScanGeolocate(query, { lat: data.lat, lng: data.lng, type: 'phone', region: data.region });
           }
-        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'username' && activeTab !== 'phone') {
+        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'username' && activeTab !== 'dossier' && activeTab !== 'phone') {
           fetch(`/api/osint/ip?ip=${encodeURIComponent(query)}`)
             .then(r => r.json())
             .then(locData => {
@@ -312,6 +314,119 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
   const renderStructuredResults = () => {
     if (!results) return null;
     const r = results;
+
+    // ── DOSSIER (Orchestrated OSINT/HUMINT) ──
+    if (activeTab === 'dossier') {
+      const d = r as {
+        target: string; target_type: string; bluf: string; classification: string;
+        confidence: string; collected_at: string; duration_ms: number;
+        coverage: { agents_run: number; agents_ok: number; findings: number; by_discipline: Record<string,number>; by_layer: Record<string,number> };
+        findings: Array<{ admiralty: string; title: string; summary: string; discipline: string; layer: string; citations?: Array<{label:string;url?:string}> }>;
+        pivots: Array<{ type: string; value: string; reason: string }>;
+        agents: Array<{ agent: string; ok: boolean; ms: number; error?: string }>;
+        caveats: string[];
+      };
+      const confColor: Record<string,string> = { HIGH: '#00E676', MODERATE: '#FF9500', LOW: '#FF3D3D' };
+      const layerColor: Record<string,string> = { surface: '#448AFF', deep: '#FFD700', dark: '#E040FB' };
+      const admColor = (a: string) => {
+        const r = a[0]; const c = parseInt(a[1],10);
+        if ((r==='A'||r==='B') && c<=2) return '#00E676';
+        if ((r==='A'||r==='B'||r==='C') && c<=3) return '#FF9500';
+        return '#888';
+      };
+      return (
+        <div className="space-y-3">
+          {/* Classification + BLUF */}
+          <div className="p-2.5 rounded border border-[#FF6B35]/40 bg-[#FF6B35]/8">
+            <div className="text-[8px] font-mono text-[#FF6B35]/70 tracking-widest mb-1">{d.classification}</div>
+            <div className="text-[10px] font-mono text-[#E8E6E0] leading-snug">{d.bluf}</div>
+          </div>
+          {/* KPI bar */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { label: 'CONFIDENCE', val: d.confidence, color: confColor[d.confidence] ?? '#888' },
+              { label: 'FINDINGS', val: String(d.coverage?.findings ?? 0), color: '#FF6B35' },
+              { label: 'AGENTS OK', val: `${d.coverage?.agents_ok}/${d.coverage?.agents_run}`, color: '#448AFF' },
+              { label: 'TIME', val: `${((d.duration_ms??0)/1000).toFixed(1)}s`, color: '#E8E6E0' },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="p-1.5 rounded border border-[var(--border-secondary)]/30 bg-[var(--bg-tertiary)]/30 text-center">
+                <div className="text-[8px] font-mono text-[var(--text-muted)] mb-0.5">{label}</div>
+                <div className="text-[11px] font-mono font-bold" style={{ color }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          {/* Layer distribution bar */}
+          {d.coverage?.by_layer && (
+            <div className="space-y-1">
+              <div className="text-[9px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Layer coverage</div>
+              <div className="flex gap-2">
+                {(['surface','deep','dark'] as const).map(l => (
+                  <div key={l} className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono border"
+                    style={{ borderColor: `${layerColor[l]}50`, color: layerColor[l], background: `${layerColor[l]}15` }}>
+                    {l} <span className="font-bold">{d.coverage.by_layer[l] ?? 0}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Findings */}
+          {d.findings?.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="text-[9px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Findings ({d.findings.length})</div>
+              {d.findings.map((f, i) => (
+                <div key={i} className="p-2 rounded border border-[var(--border-secondary)]/30 bg-[var(--bg-tertiary)]/20 space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: `${admColor(f.admiralty)}25`, color: admColor(f.admiralty), border: `1px solid ${admColor(f.admiralty)}60` }}>{f.admiralty}</span>
+                    <span className="text-[8px] font-mono px-1 py-0.5 rounded" style={{ background: `${layerColor[f.layer] ?? '#888'}20`, color: layerColor[f.layer] ?? '#888' }}>{f.layer}</span>
+                    <span className="text-[8px] font-mono text-[var(--text-muted)]">{f.discipline}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-[#E8E6E0] font-semibold leading-snug">{f.title}</div>
+                  <div className="text-[9px] font-mono text-[var(--text-muted)] leading-snug">{f.summary}</div>
+                  {f.citations?.map((c, ci) => c.url
+                    ? <a key={ci} href={c.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[8px] font-mono text-[#448AFF] hover:underline"><ExternalLink className="w-2 h-2" />{c.label}</a>
+                    : <span key={ci} className="text-[8px] font-mono text-[var(--text-muted)]">{c.label}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Pivots */}
+          {d.pivots?.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-[9px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Pivot targets ({d.pivots.length})</div>
+              <div className="flex flex-wrap gap-1">
+                {d.pivots.map((p, i) => (
+                  <span key={i} title={p.reason} className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-[#FF6B35]/40 bg-[#FF6B35]/10 text-[#FF6B35] cursor-help">{p.type}:{p.value}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Caveats */}
+          {d.caveats?.length > 0 && (
+            <div className="p-2 rounded border border-[var(--border-secondary)]/20 bg-[var(--bg-tertiary)]/20 space-y-0.5">
+              <div className="text-[8px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1">Caveats</div>
+              {d.caveats.map((c, i) => <div key={i} className="text-[8px] font-mono text-[var(--text-muted)] leading-snug">• {c}</div>)}
+            </div>
+          )}
+          {/* Agent status table */}
+          {d.agents?.length > 0 && (
+            <details className="text-[8px] font-mono">
+              <summary className="cursor-pointer text-[var(--text-muted)] uppercase tracking-wider select-none">Collection log</summary>
+              <div className="mt-1 space-y-0.5">
+                {d.agents.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {a.ok ? <CheckCircle className="w-2.5 h-2.5 text-green-400 flex-shrink-0" /> : <XCircle className="w-2.5 h-2.5 text-red-400 flex-shrink-0" />}
+                    <span className="text-[var(--text-muted)] w-36 truncate">{a.agent}</span>
+                    <span className="text-[var(--text-muted)]">{a.ms}ms</span>
+                    {a.error && <span className="text-red-400 truncate">{a.error}</span>}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      );
+    }
 
     // ── PORT SCAN ──
     if (activeTab === 'scanner') {
@@ -755,6 +870,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         {/* Secondary Controls */}
         {activeTab === 'scanner' && (
           <select value={scanType} onChange={e => setScanType(e.target.value)}
+            aria-label="Scan type"
             className="bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] rounded-lg px-2 py-1.5 text-[10px] font-mono text-[var(--text-muted)] outline-none w-full">
             <option value="quick">QUICK SCAN</option><option value="deep">DEEP SCAN</option><option value="ports">TOP 1000 PORTS</option>
           </select>
@@ -960,7 +1076,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
                                     {info?.severity && (
                                       <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded" style={{ backgroundColor: severityColor + '15', color: severityColor, border: `1px solid ${severityColor}40` }}>{info.severity}</span>
                                     )}
-                                    <a href={`https://nvd.nist.gov/vuln/detail/${cveId}`} target="_blank" rel="noreferrer" className="text-[#5C5A54] hover:text-[#E8E6E0] transition-colors">
+                                    <a href={`https://nvd.nist.gov/vuln/detail/${cveId}`} target="_blank" rel="noreferrer" title={`View ${cveId} on NVD`} className="text-[#5C5A54] hover:text-[#E8E6E0] transition-colors">
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
                                   </div>
@@ -1043,7 +1159,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
             <span className="gotham-tag gotham-tag--info" style={{ fontSize: '9px' }}>EXPANDED VIEW</span>
             <span className="gotham-tag gotham-tag--classified" style={{ fontSize: '8px' }}>{TABS.length} MODULES</span>
           </div>
-          <button onClick={() => setIsFullScreen(false)} className="p-2 hover:bg-white/5 rounded transition-colors text-[var(--text-muted)] hover:text-white">
+          <button onClick={() => setIsFullScreen(false)} aria-label="Exit full screen" className="p-2 hover:bg-white/5 rounded transition-colors text-[var(--text-muted)] hover:text-white">
             <Minimize2 className="w-5 h-5" />
           </button>
         </div>
