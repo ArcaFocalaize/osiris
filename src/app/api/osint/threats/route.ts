@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
 
+// In-memory cache for the Phishing.army domain blocklist (free, no API key)
+let phishingSet: Set<string> | null = null;
+let phishingFetchedAt = 0;
+const PHISHING_TTL_MS = 60 * 60 * 1000; // 1h
+
+async function getPhishingBlocklist(): Promise<Set<string> | null> {
+  const now = Date.now();
+  if (phishingSet && now - phishingFetchedAt < PHISHING_TTL_MS) return phishingSet;
+  try {
+    const res = await fetch('https://phishing.army/download/phishing_army_blocklist.txt', {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return phishingSet;
+    const text = await res.text();
+    const set = new Set<string>();
+    for (const line of text.split('\n')) {
+      const d = line.trim().toLowerCase();
+      if (d && !d.startsWith('#')) set.add(d);
+    }
+    phishingSet = set;
+    phishingFetchedAt = now;
+    return set;
+  } catch {
+    return phishingSet;
+  }
+}
+
 // Threat Intelligence — AlienVault OTX public pulse feed + Tor exit nodes
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -59,6 +86,21 @@ export async function GET(req: Request) {
           results.tor_exit_node = null;
         }
 
+        // abuse.ch Feodo Tracker — botnet C2 IP blocklist (free, no API key)
+        try {
+          const feodoRes = await fetch('https://feodotracker.abuse.ch/downloads/ipblocklist.json', {
+            signal: AbortSignal.timeout(6000),
+            headers: { 'Accept': 'application/json' },
+          });
+          if (feodoRes.ok) {
+            const feed = await feodoRes.json();
+            const hit = Array.isArray(feed) ? feed.find((e: any) => e.ip_address === query) : null;
+            results.feodo_c2 = hit
+              ? { listed: true, malware: hit.malware, first_seen: hit.first_seen, last_online: hit.last_online }
+              : { listed: false };
+          }
+        } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
+
         // AlienVault OTX IP reputation (public)
         try {
           const res = await fetch(`https://otx.alienvault.com/api/v1/indicators/IPv4/${query}/general`, {
@@ -92,11 +134,21 @@ export async function GET(req: Request) {
             };
           }
         } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
+
+        // Phishing.army — community phishing domain blocklist (free, no API key, cached 1h)
+        try {
+          const blocklist = await getPhishingBlocklist();
+          if (blocklist) {
+            results.phishing_army = { listed: blocklist.has(query.toLowerCase()) };
+          }
+        } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
       }
     }
 
-    results.threat_level = (results.otx?.pulse_count || 0) > 5 ? 'HIGH' :
-                           (results.otx?.pulse_count || 0) > 0 ? 'MEDIUM' : 'LOW';
+    const pulseCount = results.otx?.pulse_count || 0;
+    const knownBad = results.feodo_c2?.listed || results.phishing_army?.listed || results.tor_exit_node === true;
+    results.threat_level = knownBad || pulseCount > 5 ? 'HIGH' :
+                           pulseCount > 0 ? 'MEDIUM' : 'LOW';
 
     return NextResponse.json(results);
   } catch {

@@ -1,0 +1,517 @@
+{
+  "version": 1,
+  "generated_at": "2025",
+  "source": "Tools per popolamento base dati (CTI/OSINT curated)",
+  "description": "Catalogo curato di sorgenti OSINT/CTI, strumenti per la sicurezza della supply chain e framework di compliance correlati ai criteri NIS2.",
+  "tools": [
+    {
+      "name": "VirusTotal",
+      "type": "Commerciale (con versione Free limitata)",
+      "free_alternatives": "Hybrid-Analysis, Intezer, MetaDefender",
+      "data_provided": "Indicatori di compromissione (IOC), analisi file e URL sospetti",
+      "formats": "JSON, CSV, API REST",
+      "info_type": "Hash file, URL malevoli, reputazione IP",
+      "use_case": "Analisi di malware, monitoraggio phishing",
+      "cti_value": "Permette di verificare rapidamente file e URL sospetti grazie all'aggregazione di più antivirus",
+      "smb_relevant": true
+    },
+    {
+      "name": "Shodan",
+      "type": "Commerciale (con versione Free limitata)",
+      "free_alternatives": "Censys (parzialmente), ZoomEye, Fofa",
+      "data_provided": "Scansione dispositivi esposti su Internet",
+      "formats": "JSON, API REST",
+      "info_type": "Informazioni su porte aperte, vulnerabilità note",
+      "use_case": "Security assessment, ricerca vulnerabilità",
+      "cti_value": "Individua dispositivi esposti pubblicamente e rileva configurazioni insicure",
+      "smb_relevant": true
+    },
+    {
+      "name": "AbuseIPDB",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "Reputazione IP, segnalazioni di abuso",
+      "formats": "JSON, CSV",
+      "info_type": "Blacklist IP malevoli",
+      "use_case": "Firewall filtering, threat intelligence",
+      "cti_value": "Aiuta a bloccare IP dannosi segnalati dalla comunità",
+      "smb_relevant": true
+    },
+    {
+      "name": "Censys",
+      "type": "Commerciale (con versione Free limitata)",
+      "free_alternatives": "ZoomEye, Fofa, Shodan Free",
+      "data_provided": "Rilevamento infrastrutture online",
+      "formats": "JSON, API REST",
+      "info_type": "Informazioni su certificati, servizi, vulnerabilità",
+      "use_case": "Security monitoring, cyber intelligence",
+      "cti_value": "Utile per mappare asset esposti e identificare punti deboli nella rete"
+    },
+    {
+      "name": "AlienVault OTX",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "Threat intelligence collaborativa",
+      "formats": "JSON, API REST",
+      "info_type": "IOC, TTPs attaccanti, indicatori malevoli",
+      "use_case": "Threat intelligence, difesa proattiva",
+      "cti_value": "Permette la condivisione di informazioni sulle minacce tra esperti di sicurezza"
+    },
+    {
+      "name": "ThreatCrowd",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "Intelligence su domini, IP e file malevoli",
+      "formats": "JSON, API REST",
+      "info_type": "Relazioni tra malware, domini, IP",
+      "use_case": "Investigazioni CTI, threat hunting",
+      "cti_value": "Aiuta a comprendere connessioni tra elementi malevoli"
+    },
+    {
+      "name": "GreyNoise",
+      "type": "Commerciale (con versione Free limitata)",
+      "free_alternatives": "AbuseIPDB, OTX, Pulsedive",
+      "data_provided": "Identificazione traffico malevolo",
+      "formats": "JSON, API REST",
+      "info_type": "Attività scanner malevoli",
+      "use_case": "Filtraggio di falsi positivi nei SOC",
+      "cti_value": "Aiuta a distinguere tra traffico legittimo e attaccanti attivi"
+    },
+    {
+      "name": "OTX (Open Threat Exchange)",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "Indicatori di minaccia condivisi dalla community",
+      "formats": "JSON, CSV, API REST",
+      "info_type": "Hash file, URL, IP malevoli",
+      "use_case": "Threat intelligence, incident response",
+      "cti_value": "Consente di ottenere indicatori aggiornati da esperti di tutto il mondo",
+      "smb_relevant": true
+    },
+    {
+      "name": "Pulsedive",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "OSINT e analisi indicatori malevoli",
+      "formats": "JSON, API REST",
+      "info_type": "Indicatori su domini, IP, URL sospetti",
+      "use_case": "Threat intelligence, protezione firewall",
+      "cti_value": "Permette di investigare rapidamente domini sospetti",
+      "smb_relevant": true
+    },
+    {
+      "name": "CIRCL Passive DNS",
+      "type": "Open Source (Free)",
+      "free_alternatives": "",
+      "data_provided": "Storico risoluzioni DNS",
+      "formats": "JSON, CSV, API REST",
+      "info_type": "Analisi movimenti DNS sospetti",
+      "use_case": "Monitoraggio domini malevoli, threat hunting",
+      "cti_value": "Utile per analizzare l’infrastruttura di attacco e prevenire minacce",
+      "smb_relevant": true
+    },
+    {
+      "name": "AIorNOT.com",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Analisi contenuti generati da IA",
+      "formats": "Testo, JSON",
+      "info_type": "Threat Intelligence",
+      "use_case": "Rilevamento deepfake e IA malevoli",
+      "cti_value": "Identificazione automatizzata di contenuti IA"
+    },
+    {
+      "name": "Circ.lu",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Indicatori di compromissione (IoC)",
+      "formats": "CSV, JSON",
+      "info_type": "Threat Intelligence",
+      "use_case": "Condivisione IoC tra analisti",
+      "cti_value": "Fonte attendibile per minacce emergenti"
+    },
+    {
+      "name": "OTX (AlienVault)",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Database di minacce condivise",
+      "formats": "JSON, XML",
+      "info_type": "Threat Intelligence",
+      "use_case": "Rilevamento e condivisione IoC",
+      "cti_value": "Ampia comunità di threat intelligence"
+    },
+    {
+      "name": "Mnemonic",
+      "type": "Commerciale",
+      "free_alternatives": "",
+      "data_provided": "Cyber Threat Intelligence",
+      "formats": "JSON, API REST",
+      "info_type": "Threat Intelligence",
+      "use_case": "Servizi di monitoraggio avanzati",
+      "cti_value": "Affidabile per correlazioni di attacchi"
+    },
+    {
+      "name": "Blockcypher",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Transazioni blockchain",
+      "formats": "JSON, API REST",
+      "info_type": "Blockchain Security",
+      "use_case": "Monitoraggio frodi e transazioni",
+      "cti_value": "Strumento essenziale per indagini crypto"
+    },
+    {
+      "name": "Bitcoinabuse",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Indirizzi Bitcoin segnalati",
+      "formats": "CSV, JSON",
+      "info_type": "Blockchain Security",
+      "use_case": "Analisi frodi e truffe crypto",
+      "cti_value": "Rilevamento di wallet sospetti"
+    },
+    {
+      "name": "Bigdatacloud.net",
+      "type": "Commerciale",
+      "free_alternatives": "",
+      "data_provided": "Geolocalizzazione IP",
+      "formats": "JSON, API REST",
+      "info_type": "Threat Intelligence",
+      "use_case": "Identificazione provenienza traffico",
+      "cti_value": "Supporto per threat intelligence geospaziale"
+    },
+    {
+      "name": "Quad9",
+      "type": "Open Source",
+      "free_alternatives": "NextDNS, Pi-hole",
+      "data_provided": "DNS Filtering",
+      "formats": "Testo, CSV",
+      "info_type": "DNS Security",
+      "use_case": "Blocco automatico di domini malevoli",
+      "cti_value": "Protezione proattiva tramite DNS filtering",
+      "smb_relevant": true
+    },
+    {
+      "name": "Feodotracker",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Tracker di botnet",
+      "formats": "CSV, JSON, API",
+      "info_type": "Malware Analysis",
+      "use_case": "Analisi botnet e infezioni attive",
+      "cti_value": "Riconosciuto da enti di sicurezza informatica",
+      "smb_relevant": true
+    },
+    {
+      "name": "JoeSandbox",
+      "type": "Commerciale",
+      "free_alternatives": "",
+      "data_provided": "Sandbox per analisi malware",
+      "formats": "JSON, HTML, PDF",
+      "info_type": "Malware Analysis",
+      "use_case": "Analisi statica e dinamica di malware",
+      "cti_value": "Report dettagliati su minacce avanzate"
+    },
+    {
+      "name": "Blocklist.net",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Lista di IP malevoli",
+      "formats": "CSV, TXT",
+      "info_type": "Threat Intelligence",
+      "use_case": "Blocco automatico di IP dannosi",
+      "cti_value": "Utile per firewall e sistemi IDS/IPS"
+    },
+    {
+      "name": "Malware Bazaar",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Database di malware",
+      "formats": "JSON, CSV, API",
+      "info_type": "Malware Analysis",
+      "use_case": "Analisi e condivisione di malware",
+      "cti_value": "Risorsa centrale per ricercatori di malware",
+      "smb_relevant": true
+    },
+    {
+      "name": "Mitchellkrozga",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "OSINT e cyber threat analysis",
+      "formats": "JSON, CSV",
+      "info_type": "Threat Intelligence",
+      "use_case": "Analisi forense e investigazioni",
+      "cti_value": "Fonte per intelligence personalizzate"
+    },
+    {
+      "name": "Phishing.army",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Blacklist domini di phishing",
+      "formats": "CSV, JSON",
+      "info_type": "Phishing Protection",
+      "use_case": "Protezione contro attacchi phishing",
+      "cti_value": "Rilevamento tempestivo di nuovi domini malevoli",
+      "smb_relevant": true
+    },
+    {
+      "name": "Firebog.net",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Filtri DNS per tracker e malware",
+      "formats": "TXT, CSV",
+      "info_type": "DNS Security",
+      "use_case": "Blocco pubblicità e tracking dannosi",
+      "cti_value": "Alternativa a Pi-hole per sicurezza DNS"
+    },
+    {
+      "name": "Jeroenqui.be",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Indicatori di compromissione",
+      "formats": "JSON, TXT",
+      "info_type": "Threat Intelligence",
+      "use_case": "Condivisione di minacce tra esperti",
+      "cti_value": "Fonte aggiornata per nuove minacce"
+    },
+    {
+      "name": "Insicurezzadigitale.com",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Notizie e aggiornamenti di cybersecurity",
+      "formats": "HTML, RSS",
+      "info_type": "Cybersecurity News",
+      "use_case": "Informazione e divulgazione sicurezza",
+      "cti_value": "Riferimento per comunità cyber italiana"
+    },
+    {
+      "name": "Abuse.ch",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Malware e tracker botnet",
+      "formats": "CSV, JSON, API",
+      "info_type": "Malware Analysis",
+      "use_case": "Identificazione botnet attive",
+      "cti_value": "Fonte riconosciuta a livello globale",
+      "smb_relevant": true
+    },
+    {
+      "name": "ThreatView.io",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Intelligence su minacce attive",
+      "formats": "JSON, CSV",
+      "info_type": "Threat Intelligence",
+      "use_case": "Analisi e monitoraggio cyber threats",
+      "cti_value": "Alternativa a ThreatConnect"
+    },
+    {
+      "name": "dan.me.uk - torlist",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Elenco di nodi Tor",
+      "formats": "TXT",
+      "info_type": "Anonymity Analysis",
+      "use_case": "Monitoraggio traffico Tor",
+      "cti_value": "Utile per analisi darknet e investigazioni"
+    },
+    {
+      "name": "Triage",
+      "type": "Commerciale",
+      "free_alternatives": "",
+      "data_provided": "Sandbox per analisi malware",
+      "formats": "JSON, API",
+      "info_type": "Malware Analysis",
+      "use_case": "Analisi automatizzata di malware",
+      "cti_value": "Ottimo per reverse engineering di minacce"
+    },
+    {
+      "name": "Urlhaus",
+      "type": "Open Source",
+      "free_alternatives": "",
+      "data_provided": "Database di URL malevoli",
+      "formats": "JSON, CSV, API",
+      "info_type": "Threat Intelligence",
+      "use_case": "Monitoraggio di siti di phishing e malware",
+      "cti_value": "Usato da aziende per bloccare minacce web",
+      "smb_relevant": true
+    },
+    {
+      "name": "Viriback.com",
+      "type": "Commerciale",
+      "free_alternatives": "",
+      "data_provided": "Analisi file sospetti",
+      "formats": "JSON, HTML",
+      "info_type": "Malware Analysis",
+      "use_case": "Analisi rapida di eseguibili dannosi",
+      "cti_value": "Alternativa a VirusTotal con report avanzati"
+    }
+  ],
+  "supply_chain": [
+    {
+      "category": "Cyber Risk Rating & Vendor Risk Management",
+      "tools": [
+        {
+          "name": "SecurityScorecard",
+          "desc": "Punteggio di sicurezza aziendale basato su asset esposti, vulnerabilità, misconfigurazioni e attività malevole."
+        },
+        {
+          "name": "BitSight",
+          "desc": "Valutazione della sicurezza aziendale basata su dati OSINT e metriche di cyber risk."
+        },
+        {
+          "name": "UpGuard",
+          "desc": "Identifica rischi di terze parti nella supply chain e verifica esposizione di dati."
+        },
+        {
+          "name": "RiskRecon (Mastercard)",
+          "desc": "Analizza il rischio cyber della supply chain con punteggi basati su asset esposti."
+        }
+      ]
+    },
+    {
+      "category": "Threat Intelligence & Attack Surface Monitoring",
+      "tools": [
+        {
+          "name": "Censys",
+          "desc": "Motore di ricerca per dispositivi connessi a Internet, individua esposizioni pubbliche di terze parti."
+        },
+        {
+          "name": "Shodan",
+          "desc": "Identifica dispositivi, server e sistemi esposti su Internet di un fornitore."
+        },
+        {
+          "name": "Pulsedive",
+          "desc": "Intelligence su IoC con tracking delle minacce."
+        },
+        {
+          "name": "GreyNoise",
+          "desc": "Rileva traffico di scansione malevola e rischi di esposizione."
+        }
+      ]
+    },
+    {
+      "category": "Vulnerability Management & Attack Surface Analysis",
+      "tools": [
+        {
+          "name": "Nessus (Tenable)",
+          "desc": "Scanner di vulnerabilità per audit di infrastrutture di terze parti."
+        },
+        {
+          "name": "OpenVAS",
+          "desc": "Alternativa open source a Nessus per scansione vulnerabilità."
+        },
+        {
+          "name": "Qualys VMDR",
+          "desc": "Gestione vulnerabilità con scoperta e monitoraggio continuo di asset."
+        },
+        {
+          "name": "Intrigue.io",
+          "desc": "Attack surface management per identificare asset digitali esposti."
+        }
+      ]
+    },
+    {
+      "category": "Dark Web Monitoring & Data Leak Detection",
+      "tools": [
+        {
+          "name": "SpyCloud",
+          "desc": "Monitora il dark web e identifica credenziali compromesse della supply chain."
+        },
+        {
+          "name": "Have I Been Pwned",
+          "desc": "Verifica se email/password di un fornitore sono in un data breach."
+        },
+        {
+          "name": "DarkTracer",
+          "desc": "Visibilità su potenziali attacchi e credenziali compromesse."
+        }
+      ]
+    },
+    {
+      "category": "Compliance & Regulatory Check",
+      "tools": [
+        {
+          "name": "OSINT Framework",
+          "desc": "Raccolta di informazioni su aziende e individui con tecniche OSINT."
+        },
+        {
+          "name": "NIST CSF Tool",
+          "desc": "Analizza la compliance di un'azienda rispetto agli standard NIST."
+        },
+        {
+          "name": "MITRE ATT&CK Navigator",
+          "desc": "Analizza tecniche di attacco e difesa applicabili alla supply chain."
+        }
+      ]
+    }
+  ],
+  "frameworks": [
+    {
+      "name": "OSINT Framework",
+      "category": "Open Source Intelligence",
+      "analysis_type": "Raccolta dati OSINT, informazioni aziendali e reputazionali",
+      "scope": "Investigazioni di sicurezza, analisi fornitori",
+      "formats": "Web-based, API",
+      "nis2": "Art. 21 - Monitoraggio e Analisi del Rischio",
+      "use_case": "Identifica esposizioni di dati, connessioni a minacce, relazioni rischiose",
+      "supply_chain_value": "Individua fornitori con dati esposti, domini compromessi o connessioni rischiose",
+      "website": "osintframework.com"
+    },
+    {
+      "name": "NIST Cybersecurity Framework (CSF)",
+      "category": "Compliance & Regulatory",
+      "analysis_type": "Valutazione della conformità agli standard di sicurezza",
+      "scope": "Cybersecurity governance, risk management",
+      "formats": "PDF, JSON, Excel",
+      "nis2": "Art. 18 - Misure di Gestione del Rischio Cyber",
+      "use_case": "Aiuta a determinare il livello di maturità della sicurezza di un fornitore",
+      "supply_chain_value": "Verifica se l’SMB ha un framework strutturato di gestione del rischio",
+      "website": "nist.gov/cyberframework"
+    },
+    {
+      "name": "MITRE ATT&CK Navigator",
+      "category": "Threat Intelligence",
+      "analysis_type": "Mappatura delle minacce, tecniche di attacco",
+      "scope": "Analisi tattiche e tecniche di attaccanti noti",
+      "formats": "JSON, CSV, Web-based",
+      "nis2": "Art. 23 - Rilevamento e Risposta alle Minacce",
+      "use_case": "Identifica vettori di attacco e posture difensive",
+      "supply_chain_value": "Aiuta a valutare il rischio di esposizione a minacce cibernetiche",
+      "website": "attack.mitre.org"
+    },
+    {
+      "name": "CIS Controls",
+      "category": "Best Practices Security",
+      "analysis_type": "Controlli critici per migliorare la postura di sicurezza",
+      "scope": "Cybersecurity assessment, IT governance",
+      "formats": "PDF, JSON, Excel",
+      "nis2": "Art. 20 - Controlli di Sicurezza Minimi per Fornitori",
+      "use_case": "Fornisce controlli standard per proteggere reti e sistemi",
+      "supply_chain_value": "Aiuta a stabilire un livello minimo di sicurezza per gli SMB della supply chain",
+      "website": "cisecurity.org/controls"
+    },
+    {
+      "name": "ISO/IEC 27001",
+      "category": "Compliance & Regulatory",
+      "analysis_type": "Standard per la gestione della sicurezza delle informazioni",
+      "scope": "Certificazioni di sicurezza per aziende",
+      "formats": "PDF, CSV, Excel",
+      "nis2": "Art. 21 - Monitoraggio e Audit Periodici",
+      "use_case": "Definisce best practice per la gestione della sicurezza",
+      "supply_chain_value": "Indica se un fornitore segue standard di sicurezza riconosciuti",
+      "website": "iso.org/iso-27001"
+    },
+    {
+      "name": "SOC 2 Compliance",
+      "category": "Compliance & Trust",
+      "analysis_type": "Controlli di sicurezza per fornitori di servizi",
+      "scope": "Valutazione dell’affidabilità dei provider cloud",
+      "formats": "PDF, Web-based",
+      "nis2": "Art. 22 - Sicurezza di Reti e Sistemi IT Critici",
+      "use_case": "Assicura che un fornitore abbia solide misure di sicurezza",
+      "supply_chain_value": "Riduce i rischi operativi associati alla supply chain",
+      "website": "aicpa.org/soc4so"
+    }
+  ]
+}
