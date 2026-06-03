@@ -66,7 +66,7 @@ Queste tecniche servono a "esternalizzare" il processo di pensiero, rendendolo v
 | **Cone of Plausibility** | Tecnica di scenario planning. Si parte dal presente e si proiettano driver chiave (tecnologia, demografia) per creare un ventaglio di futuri: dal "Probabile" al "Plausibile" fino al "Wild Card" (improbabile ma devastante). 15 |
 | **Analisi SWOT e PESTLE** | Analisi strategica dei fattori di forza/debolezza (SWOT) e ambientali (Politici, Economici, Sociali, Tecnologici, Legali, Ambientali). Fondamentale per l'intelligence aziendale e geopolitica. 12 |
 
-## ---
+---
 
 **3\. Analisi dei Target: Dal Singolo Individuo alle Reti Complesse**
 
@@ -116,7 +116,7 @@ Per le entità commerciali, l'intelligence si fonde con la strategia di mercato.
 * **Porter's Five Forces:** Analisi della posizione competitiva (Potere fornitori, clienti, nuovi entranti, sostituti, rivalità interna).33  
 * **War Gaming Aziendale:** Simulazioni di scenari di mercato per anticipare le mosse dei competitor.35
 
-## ---
+---
 
 **4\. Agenzie Globali: Modelli Operativi a Confronto**
 
@@ -152,9 +152,9 @@ Ogni servizio ha un "DNA" unico, derivante dalla sua storia e missione.
 * **Punti di Forza:** Capacità di operare in zone tribali complesse (Libia, Somalia) grazie a un approccio umano ed empatico, integrazione con le forze speciali militari per operazioni mirate.  
 * **Metodologia:** Pragmatismo operativo e forte legame con la tutela degli interessi economici nazionali (sicurezza energetica).46
 
-## ---
+---
 
-**5\. Tradecraft Operativo: Tecniche di Raccolta e Inganno**
+## **5\. Tradecraft Operativo: Tecniche di Raccolta e Inganno**
 
 Il "Tradecraft" è l'insieme delle tecniche pratiche usate per condurre operazioni clandestine.
 
@@ -185,9 +185,7 @@ Come passano le informazioni senza incontrarsi?
 * **Maskirovka:** Dottrina russa di "camuffamento" strategico. Include la negazione plausibile, l'uso di esche (decoy), e la disinformazione sistematica.42  
 * **Reflexive Control (Controllo Riflessivo):** Una metodologia avanzata che consiste nel fornire al nemico informazioni appositamente confezionate affinché egli prenda *volontariamente* una decisione predeterminata, credendo sia farina del suo sacco. Si basa sullo sfruttamento dei bias cognitivi e morali dell'avversario.42
 
-## ---
-
-**6\. Generazione degli Output: Struttura dei Documenti e Classificazioni**
+## **6\. Generazione degli Output: Struttura dei Documenti e Classificazioni**
 
 L'analista deve saper scrivere. La regola aurea è **BLUF (Bottom Line Up Front)**: la conclusione va nella prima frase. Il decisore non ha tempo per leggere la trama di un giallo.61
 
@@ -215,9 +213,9 @@ Ogni informazione in un report professionale deve avere un codice alfanumerico c
 
 *Esempio:* Un report marcato **C-3** proviene da una fonte mediocre e riporta un fatto possibile ma non verificato. Un **A-1** è oro colato.
 
-## ---
+---
 
-**7\. Use Cases e Scenari Applicativi**
+## **7\. Use Cases e Scenari Applicativi**
 
 ### **Scenario A: Manhunt nel Sahel (Ambito Geopolitico/Militare)**
 
@@ -248,7 +246,7 @@ Rilevamento di un'operazione di influenza straniera.
 
 L'intelligence è un'architettura cognitiva complessa che richiede un equilibrio tra arte (intuizione, empatia nella HUMINT) e scienza (rigore metodologico, tecnologia SIGINT). Per l'analista, il fine ultimo non è mai la certezza assoluta — un lusso inesistente nel mondo reale — ma la riduzione del margine di errore a un livello accettabile per permettere al decisore di agire. Padroneggiare queste strutture, dalle tecniche di elicitazione alla stesura di un PDB, significa possedere la chiave per decifrare il caos del mondo contemporaneo.
 
-#### **Bibliografia**
+### **Bibliografia**
 
 1. Intelligence cycle \- Wikipedia, accesso eseguito il giorno dicembre 12, 2025, [https://en.wikipedia.org/wiki/Intelligence\_cycle](https://en.wikipedia.org/wiki/Intelligence_cycle)  
 2. The Intelligence Cycle: How to Process Information Like an Analyst \- The Mind Collection, accesso eseguito il giorno dicembre 12, 2025, [https://themindcollection.com/intelligence-cycle-how-to-process-information-like-an-analyst/](https://themindcollection.com/intelligence-cycle-how-to-process-information-like-an-analyst/)  
