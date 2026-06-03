@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronUp, Loader2, AlertTriangle, Server,
   Wifi, Lock, MapPin, Bug, Code, Layers, Network, Fingerprint,
   CheckCircle, XCircle, Clock, ExternalLink, Crosshair,
-  Maximize2, Minimize2, Gavel, Bitcoin, Phone, Terminal, ShieldAlert
+  Maximize2, Minimize2, Gavel, Bitcoin, Phone, Terminal, ShieldAlert, UserSearch
 } from 'lucide-react';
 import { ipToNumber, numberToIp, calculateSubnetStart, classifyDevice, assessRisk, batchFetch, ShodanInternetDBResponse, SweepDevice } from '@/lib/osint-utils';
 
@@ -29,6 +29,7 @@ const TABS = [
   { id: 'mac', label: 'MAC ADDR', icon: Fingerprint, placeholder: 'MAC address', color: '#FFD700' },
   { id: 'phone', label: 'PHONE INTEL', icon: Phone, placeholder: 'Phone number (e.g. +1...)', color: '#FF9500' },
   { id: 'leaks', label: 'DATA LEAKS', icon: ShieldAlert, placeholder: 'Email address', color: '#E040FB' },
+  { id: 'username', label: 'USERNAME', icon: UserSearch, placeholder: 'Username to enumerate', color: '#00E676' },
   { id: 'github', label: 'GITHUB RECON', icon: Terminal, placeholder: 'GitHub username', color: '#87CEEB' },
   { id: 'sweep', label: 'IP SWEEP', icon: Crosshair, placeholder: 'Enter IP address (e.g. 8.8.8.8)', color: '#FF3D3D' },
 ];
@@ -195,6 +196,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
         case 'mac': url = `/api/osint/mac?mac=${encodeURIComponent(query)}`; break;
         case 'phone': url = `/api/osint/phone?number=${encodeURIComponent(query)}`; break;
         case 'leaks': url = `/api/osint/leaks?email=${encodeURIComponent(query)}`; break;
+        case 'username': url = `/api/osint/username?user=${encodeURIComponent(query)}`; break;
         case 'crypto': url = `/api/osint/crypto?address=${encodeURIComponent(query)}`; break;
         case 'github': url = `/api/osint/github?user=${encodeURIComponent(query)}`; break;
         case 'scanner': url = `/api/scanner?target=${encodeURIComponent(query)}&type=${scanType}`; break;
@@ -221,7 +223,7 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
           if (data.lat && data.lng && onScanGeolocate) {
              onScanGeolocate(query, { lat: data.lat, lng: data.lng, type: 'phone', region: data.region });
           }
-        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'phone') {
+        } else if (activeTab !== 'sweep' && activeTab !== 'vuln' && activeTab !== 'crypto' && activeTab !== 'mac' && activeTab !== 'bgp' && activeTab !== 'github' && activeTab !== 'leaks' && activeTab !== 'username' && activeTab !== 'phone') {
           fetch(`/api/osint/ip?ip=${encodeURIComponent(query)}`)
             .then(r => r.json())
             .then(locData => {
@@ -235,8 +237,8 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
       } else {
         setError(data.error || 'Lookup failed');
       }
-    } catch (err: any) {
-      if (err?.name === 'AbortError') return; // superseded by a newer lookup
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return; // superseded by a newer lookup
       setError('Network error');
     }
     finally {
@@ -511,6 +513,36 @@ function OsintPanelInner({ isMobile, onSweepVisualize, onScanGeolocate }: OsintP
               <ResultRow label="Line Type" value={r.line_type} color={r.line_type === 'MOBILE' ? '#00E5FF' : r.line_type === 'VOIP' ? '#FF9500' : undefined} />
             </>
           )}
+        </div>
+      );
+    }
+
+    // ── USERNAME ENUMERATION ──
+    if (activeTab === 'username') {
+      const found = Array.isArray(r.found) ? r.found : [];
+      return (
+        <div>
+          <SectionHeader title="USERNAME ENUMERATION" icon={UserSearch} color="#00E676" />
+          <ResultRow label="Target" value={r.username} color="#00E676" />
+          <ResultRow label="Found" value={`${r.found_count} / ${r.checked} platforms`} color={r.found_count > 0 ? '#00E676' : undefined} />
+          {found.length > 0 && (
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              {found.map((f: any, i: number) => (
+                <a key={i} href={f.url} target="_blank" rel="noreferrer"
+                   className="flex items-center justify-between gap-2 px-2 py-1.5 rounded border border-[#00E676]/30 bg-[#00E676]/10 hover:bg-[#00E676]/20 transition-colors">
+                  <span className="text-[10px] font-mono text-[#E8E6E0] truncate">{f.name}</span>
+                  <ExternalLink className="w-2.5 h-2.5 text-[#00E676] flex-shrink-0" />
+                </a>
+              ))}
+            </div>
+          )}
+          {Array.isArray(r.inconclusive) && r.inconclusive.length > 0 && (
+            <div className="mt-2 p-2 border border-[#FF9500]/20 bg-[#FF9500]/5 rounded">
+              <span className="text-[9px] font-mono text-[#FF9500] block mb-1">INCONCLUSIVE (blocked / rate-limited)</span>
+              <span className="text-[9px] font-mono text-[var(--text-muted)] break-words">{r.inconclusive.join(', ')}</span>
+            </div>
+          )}
+          {r.note && <div className="mt-2 text-[8px] font-mono text-[var(--text-muted)] italic leading-snug">{r.note}</div>}
         </div>
       );
     }
