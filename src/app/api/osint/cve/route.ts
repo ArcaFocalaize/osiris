@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
+import { getMemo, setMemo, cachedJson, fetchRetry } from '@/lib/osint-cache';
 
-// CVE Intelligence — fetches vulnerability details from CIRCL CVE API (free, no key)
+// CVE records are immutable once published — cache for a day.
+const CVE_TTL_S = 86400;
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const cve = searchParams.get('cve');
@@ -17,23 +19,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Invalid CVE format. Expected: CVE-YYYY-NNNNN' }, { status: 400 });
   }
 
+  const cveId = cve.toUpperCase();
+  const cacheKey = `cve:${cveId}`;
+  const cached = getMemo(cacheKey);
+  if (cached) return cachedJson(cached, CVE_TTL_S);
+
   try {
-    const res = await fetch(`https://cveawg.mitre.org/api/cve/${encodeURIComponent(cve.toUpperCase())}`, {
-      signal: AbortSignal.timeout(8000),
+    const res = await fetchRetry(`https://cveawg.mitre.org/api/cve/${encodeURIComponent(cveId)}`, {
       headers: { 'Accept': 'application/json' },
-    });
+    }, { retries: 1, timeoutMs: 8000 });
 
     if (!res.ok) {
       // Fallback to CIRCL
       try {
-        const circlRes = await fetch(`https://cve.circl.lu/api/cve/${encodeURIComponent(cve.toUpperCase())}`, {
-          signal: AbortSignal.timeout(8000),
+        const circlRes = await fetchRetry(`https://cve.circl.lu/api/cve/${encodeURIComponent(cveId)}`, {
           headers: { 'Accept': 'application/json' },
-        });
+        }, { retries: 1, timeoutMs: 8000 });
         if (circlRes.ok) {
           const data = await circlRes.json();
-          return NextResponse.json({
-            id: data.id || cve.toUpperCase(),
+          const payload = {
+            id: data.id || cveId,
             description: data.summary || 'No description available.',
             cvss: data.cvss ?? null,
             cvss_vector: data.cvss_vector || null,
@@ -42,12 +47,14 @@ export async function GET(req: Request) {
             modified: data.Modified || null,
             cwe: data.cwe || null,
             source: 'circl',
-          });
+          };
+          setMemo(cacheKey, payload, CVE_TTL_S * 1000);
+          return cachedJson(payload, CVE_TTL_S);
         }
       } catch { /* fall through */ }
 
       return NextResponse.json({
-        id: cve.toUpperCase(),
+        id: cveId,
         description: 'CVE details could not be retrieved at this time.',
         cvss: null,
         references: [],
@@ -104,8 +111,8 @@ export async function GET(req: Request) {
       versions: (a.versions || []).slice(0, 3).map((v: any) => v.version).filter(Boolean),
     }));
 
-    return NextResponse.json({
-      id: data.cveMetadata?.cveId || cve.toUpperCase(),
+    const payload = {
+      id: data.cveMetadata?.cveId || cveId,
       description,
       cvss,
       cvss_vector,
@@ -116,7 +123,9 @@ export async function GET(req: Request) {
       published: data.cveMetadata?.datePublished || null,
       modified: data.cveMetadata?.dateUpdated || null,
       source: 'mitre',
-    });
+    };
+    setMemo(cacheKey, payload, CVE_TTL_S * 1000);
+    return cachedJson(payload, CVE_TTL_S);
   } catch {
     return NextResponse.json({ error: 'CVE lookup failed' }, { status: 500 });
   }

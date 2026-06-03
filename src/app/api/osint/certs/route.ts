@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
+import { getMemo, setMemo, cachedJson } from '@/lib/osint-cache';
 
-// Certificate Transparency lookup via crt.sh (free, no key)
+// Certificate Transparency logs are immutable historical records — cache 10m.
+const CERTS_TTL_S = 600;
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const domain = searchParams.get('domain');
@@ -15,6 +17,10 @@ export async function GET(req: Request) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
     return NextResponse.json({ error: 'Invalid domain format' }, { status: 400 });
   }
+
+  const cacheKey = `certs:${domain.toLowerCase()}`;
+  const cached = getMemo(cacheKey);
+  if (cached) return cachedJson(cached, CERTS_TTL_S);
 
   try {
     const res = await fetch(`https://crt.sh/?q=%25.${encodeURIComponent(domain)}&output=json`, {
@@ -56,14 +62,16 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json({
+    const payload = {
       domain,
       certificates: uniqueCerts.slice(0, 50),
       subdomains: Array.from(subdomains).sort(),
       total_certs: certs.length,
       unique_subdomains: subdomains.size,
       timestamp: new Date().toISOString(),
-    });
+    };
+    setMemo(cacheKey, payload, CERTS_TTL_S * 1000);
+    return cachedJson(payload, CERTS_TTL_S);
   } catch {
     return NextResponse.json({ domain, certificates: [], subdomains: [], error: 'Lookup failed' }, { status: 500 });
   }

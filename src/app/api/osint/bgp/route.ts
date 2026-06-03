@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
+import { getMemo, setMemo, cachedJson } from '@/lib/osint-cache';
 
-// BGP/ASN Lookup via bgpview.io (free, no key)
+// BGP routing tables are stable — cache for 10 minutes.
+const BGP_TTL_S = 600;
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('query'); // Can be IP, ASN, or prefix
@@ -19,6 +21,10 @@ export async function GET(req: Request) {
     const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(query);
     const isASN = /^(AS)?\d+$/i.test(query);
     const asnNum = isASN ? query.replace(/^AS/i, '') : null;
+
+    const cacheKey = `bgp:${query.toLowerCase()}`;
+    const cached = getMemo(cacheKey);
+    if (cached) return cachedJson(cached, BGP_TTL_S);
 
     if (isIP) {
       // IP → ASN lookup
@@ -70,7 +76,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unrecognized query format. Use IP address or AS number.' }, { status: 400 });
     }
 
-    return NextResponse.json(results);
+    setMemo(cacheKey, results, BGP_TTL_S * 1000);
+    return cachedJson(results, BGP_TTL_S);
   } catch {
     return NextResponse.json({ error: 'BGP lookup failed' }, { status: 500 });
   }

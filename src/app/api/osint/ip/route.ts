@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
 import { matchExact, type SanctionEntry } from '@/lib/sanctions';
+import { getMemo, setMemo, cachedJson } from '@/lib/osint-cache';
+
+// IP geolocation changes slowly — cache for 5 minutes.
+const IP_TTL_S = 300;
 
 // IP Geolocation + Reputation — combines multiple free sources.
 // Cross-checks the ASN owner / ISP / org strings against the OFAC SDN
@@ -21,6 +25,10 @@ export async function GET(req: Request) {
   if (!ipv4.test(ip) && !ipv6.test(ip)) {
     return NextResponse.json({ error: 'Invalid IP format' }, { status: 400 });
   }
+
+  const cacheKey = `ip:${ip}`;
+  const cached = getMemo(cacheKey);
+  if (cached) return cachedJson(cached, IP_TTL_S);
 
   try {
     const results: any = { ip, timestamp: new Date().toISOString() };
@@ -77,7 +85,8 @@ export async function GET(req: Request) {
         : null;
     } catch (e) { console.warn('[OSIRIS] Sanctions cross-check failed:', e instanceof Error ? e.message : e); }
 
-    return NextResponse.json(results);
+    setMemo(cacheKey, results, IP_TTL_S * 1000);
+    return cachedJson(results, IP_TTL_S);
   } catch {
     return NextResponse.json({ error: 'IP lookup failed' }, { status: 500 });
   }

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
 import { search, type Schema } from '@/lib/sanctions';
+import { cachedJson } from '@/lib/osint-cache';
+
+// The SDN snapshot is static per deployment — cache results for an hour.
+const SANCTIONS_TTL_S = 3600;
 
 // Standalone OFAC SDN search (free, no key) backed by the OpenSanctions
 // `us_ofac_sdn` mirror. Substring + alias-aware match, schema-filterable.
@@ -48,14 +52,14 @@ export async function GET(req: Request) {
 
   try {
     const matches = await search(query, { schema, limit });
-    return NextResponse.json({
+    return cachedJson({
       query,
       schema: schema ?? null,
       total: matches.length,
       matches,
       source: 'OpenSanctions / US OFAC SDN',
       timestamp: new Date().toISOString(),
-    });
+    }, SANCTIONS_TTL_S);
   } catch (e) {
     return NextResponse.json(
       { error: 'Sanctions lookup failed', detail: e instanceof Error ? e.message : String(e) },

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
+import { getMemo, setMemo, cachedJson } from '@/lib/osint-cache';
 
-// DNS Lookup via Google DNS-over-HTTPS (free, no key)
+// DNS records are stable for short windows — cache for 5 minutes.
+const DNS_TTL_S = 300;
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const domain = searchParams.get('domain');
@@ -16,6 +18,10 @@ export async function GET(req: Request) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
     return NextResponse.json({ error: 'Invalid domain format' }, { status: 400 });
   }
+
+  const cacheKey = `dns:${domain.toLowerCase()}`;
+  const cached = getMemo(cacheKey);
+  if (cached) return cachedJson(cached, DNS_TTL_S);
 
   try {
     const types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME', 'SOA'];
@@ -59,7 +65,8 @@ export async function GET(req: Request) {
       total_records: Object.values(results.records).flat().length,
     };
 
-    return NextResponse.json(results);
+    setMemo(cacheKey, results, DNS_TTL_S * 1000);
+    return cachedJson(results, DNS_TTL_S);
   } catch {
     return NextResponse.json({ error: 'DNS lookup failed' }, { status: 500 });
   }

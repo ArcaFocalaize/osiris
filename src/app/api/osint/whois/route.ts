@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { safeFetch, isRateLimited, getClientIp } from '@/lib/ssrf-guard';
 import { matchExact, type SanctionEntry } from '@/lib/sanctions';
+import { getMemo, setMemo, cachedJson } from '@/lib/osint-cache';
+
+// Registration data changes infrequently — cache for 10 minutes.
+const WHOIS_TTL_S = 600;
 
 // WHOIS + Domain Intelligence via RDAP (free, standardized).
 // Cross-checks any registrant / org names returned by RDAP against the
@@ -20,6 +24,10 @@ export async function GET(req: Request) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
     return NextResponse.json({ error: 'Invalid domain format' }, { status: 400 });
   }
+
+  const cacheKey = `whois:${domain.toLowerCase()}`;
+  const cached = getMemo(cacheKey);
+  if (cached) return cachedJson(cached, WHOIS_TTL_S);
 
   try {
     const results: any = { domain, timestamp: new Date().toISOString() };
@@ -108,7 +116,8 @@ export async function GET(req: Request) {
         : null;
     } catch (e) { console.warn('[OSIRIS] Sanctions cross-check failed:', e instanceof Error ? e.message : e); }
 
-    return NextResponse.json(results);
+    setMemo(cacheKey, results, WHOIS_TTL_S * 1000);
+    return cachedJson(results, WHOIS_TTL_S);
   } catch {
     return NextResponse.json({ error: 'WHOIS lookup failed' }, { status: 500 });
   }
