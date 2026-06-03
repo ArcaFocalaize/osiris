@@ -6,6 +6,12 @@ let phishingSet: Set<string> | null = null;
 let phishingFetchedAt = 0;
 const PHISHING_TTL_MS = 60 * 60 * 1000; // 1h
 
+// In-memory cache for the Tor bulk exit-node list (free, no API key). Fetching
+// it on every request was wasteful — the list changes slowly.
+let torSet: Set<string> | null = null;
+let torFetchedAt = 0;
+const TOR_TTL_MS = 30 * 60 * 1000; // 30m
+
 async function getPhishingBlocklist(): Promise<Set<string> | null> {
   const now = Date.now();
   if (phishingSet && now - phishingFetchedAt < PHISHING_TTL_MS) return phishingSet;
@@ -28,7 +34,30 @@ async function getPhishingBlocklist(): Promise<Set<string> | null> {
   }
 }
 
-// Threat Intelligence — AlienVault OTX public pulse feed + Tor exit nodes
+async function getTorExitSet(): Promise<Set<string> | null> {
+  const now = Date.now();
+  if (torSet && now - torFetchedAt < TOR_TTL_MS) return torSet;
+  try {
+    const res = await fetch('https://check.torproject.org/torbulkexitlist', {
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return torSet;
+    const text = await res.text();
+    const set = new Set<string>();
+    for (const line of text.split('\n')) {
+      const ip = line.trim();
+      if (ip && !ip.startsWith('#')) set.add(ip);
+    }
+    torSet = set;
+    torFetchedAt = now;
+    return set;
+  } catch {
+    return torSet;
+  }
+}
+
+// Threat Intelligence — AlienVault OTX + Tor exit + abuse.ch Feodo
+// + GreyNoise Community + Phishing.army. All free, keyless public endpoints.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('query'); // Optional: IP or domain to check
@@ -73,15 +102,10 @@ export async function GET(req: Request) {
       const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(query);
       
       if (isIP) {
-        // Check against Tor exit node list
+        // Check against the cached Tor exit-node list
         try {
-          const torRes = await fetch('https://check.torproject.org/torbulkexitlist', {
-            signal: AbortSignal.timeout(5000),
-          });
-          if (torRes.ok) {
-            const torList = await torRes.text();
-            results.tor_exit_node = torList.includes(query);
-          }
+          const tor = await getTorExitSet();
+          results.tor_exit_node = tor ? tor.has(query) : null;
         } catch {
           results.tor_exit_node = null;
         }
@@ -98,6 +122,29 @@ export async function GET(req: Request) {
             results.feodo_c2 = hit
               ? { listed: true, malware: hit.malware, first_seen: hit.first_seen, last_online: hit.last_online }
               : { listed: false };
+          }
+        } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
+
+        // GreyNoise Community API — keyless IP triage (benign / malicious /
+        // unknown + whether the IP is mass-scanning the internet). One of the
+        // most useful free signals for separating targeted from background noise.
+        try {
+          const gnRes = await fetch(`https://api.greynoise.io/v3/community/${query}`, {
+            signal: AbortSignal.timeout(5000),
+            headers: { 'Accept': 'application/json' },
+          });
+          if (gnRes.ok) {
+            const gn = await gnRes.json();
+            results.greynoise = {
+              noise: gn.noise === true,
+              riot: gn.riot === true,
+              classification: gn.classification,
+              name: gn.name,
+              last_seen: gn.last_seen,
+              link: gn.link,
+            };
+          } else if (gnRes.status === 404) {
+            results.greynoise = { noise: false, classification: 'unknown', note: 'Not observed by GreyNoise' };
           }
         } catch (e) { console.warn('[OSIRIS] Suppressed error:', e instanceof Error ? e.message : e); }
 
@@ -146,9 +193,14 @@ export async function GET(req: Request) {
     }
 
     const pulseCount = results.otx?.pulse_count || 0;
-    const knownBad = results.feodo_c2?.listed || results.phishing_army?.listed || results.tor_exit_node === true;
+    const gnMalicious = results.greynoise?.classification === 'malicious';
+    const knownBad =
+      results.feodo_c2?.listed ||
+      results.phishing_army?.listed ||
+      results.tor_exit_node === true ||
+      gnMalicious;
     results.threat_level = knownBad || pulseCount > 5 ? 'HIGH' :
-                           pulseCount > 0 ? 'MEDIUM' : 'LOW';
+                           pulseCount > 0 || results.greynoise?.noise ? 'MEDIUM' : 'LOW';
 
     return NextResponse.json(results);
   } catch {
